@@ -2,9 +2,11 @@
  *  tarus Tasarla — Pusula SSO oturumu
  *
  *  Tasarla bir Ekosistem uygulamasıdır (ozluk/tarus.md §5.1, karar 2026-10-02):
- *  ayrı kullanıcı sistemi yok, giriş Pusula SSO ile. Akış Model 3.0.0'daki
- *  services/authedFetch.ts ile aynıdır; YH1 ortak paketi
- *  (ozluk/tarus-kabuk/utils/pusulaOturumu.ts) birleşince ona geçilecek.
+ *  ayrı kullanıcı sistemi yok, giriş Pusula SSO ile. Akış YH1 ortak paketi
+ *  ozluk/tarus-kabuk/services/pusulaOturumu.ts ile aynıdır; o dosya TypeScript
+ *  olduğu ve Tasarla'da derleme adımı olmadığı için birebir kopyalanamıyor, bu
+ *  dosya onun düz JS karşılığıdır (paket değişirse burası da güncellenir).
+ *  Tek bilinçli fark: localhost'ta otomatik yönlendirme yok (aşağıda).
  *
  *  1. URL'de ?sso_code= varsa /auth/sso/exchange/ ile access + refresh'e çevrilir.
  *  2. Belirteçler YALNIZCA BELLEKTE tutulur (localStorage/çerez yok).
@@ -67,6 +69,8 @@
   /* Açılışta çağrılır. Dönüş: 'oturum' (giriş var) | 'yerel' (localhost, girişsiz) | 'yonlendiriliyor' */
   async function baslat(){
     const q = new URLSearchParams(location.search);
+    // Eski yetki SSO'su (?token=<jwt>) kullanılmıyor; adres çubuğunda kalmasın
+    if (q.has('token')){ q.delete('token'); const t = q.toString(); history.replaceState({}, document.title, location.pathname + (t ? `?${t}` : '') + location.hash); }
     const code = q.get('sso_code');
     if (code){
       const r = await kodTakas(code);
@@ -121,6 +125,7 @@
     location.replace(`${PUSULA_URL}/auth/cikis/`);
   }
 
+  kok.__tasarlaGetAccessToken = () => access;   // bağlam menüsü / harici yardımcılar için
   kok.PusulaOturum = {PUSULA_URL, baslat, authedFetch, kullanici, cikis, yetkilendir, oturumVar: () => !!access, yerelMi,
     belirtec: () => access};
 })(window);
