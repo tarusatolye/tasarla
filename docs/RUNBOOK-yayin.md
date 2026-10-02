@@ -29,8 +29,8 @@ Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
 | --- | --- |
 | Kaynak | GitHub `tarusatolye/tasarla`, dal `main` |
 | Build Pack | Dockerfile (kökteki `Dockerfile`) |
-| Port | 80 |
-| Alan adı | `https://tasarla.tarus.tr` |
+| Ports Exposes | 80 (Dockerfile'daki nginx 80'i dinler) |
+| Alan adı | `https://tasarla.tarus.tr` — **https** olmalı: Pusula SSO dönüş adresi yalnız https kabul eder |
 | Ortam değişkeni | yok (statik uygulama; `SOURCE_COMMIT` Coolify tarafından derlemeye verilir) |
 | Kalıcı disk | yok (plan kullanıcının tarayıcısında, aktarılan kayıtlar Pusula'da) |
 | Sağlık kontrolü | `GET /version.json` → 200 |
