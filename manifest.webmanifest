@@ -1,0 +1,14 @@
+{
+  "name": "tarus Tasarla",
+  "short_name": "Tasarla",
+  "lang": "tr",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {"src": "public/icon.svg", "sizes": "any", "type": "image/svg+xml"},
+    {"src": "public/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "public/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

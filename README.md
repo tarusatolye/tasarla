@@ -1,79 +1,100 @@
-# 户型装修设计
+# tarus Tasarla
 
-纯前端的户型装修设计工具：在 2D 平面图上摆放家具、拆改墙体、测量尺寸，一键切换到 Three.js 3D 场景，可以鸟瞰，也可以第一人称漫游。整个应用就是一个 `index.html`，无需构建，打开即用。
+`tasarla.tarus.tr` — konut planı üzerinde 2B tefriş ve 3B mekân tasarımı.
+tarus ekosisteminin bir parçasıdır: giriş Pusula SSO ile yapılır, plan tek
+adımda Pusula teklif ya da proje kaydına aktarılır.
 
-## 功能
+Motor, açık kaynak [floorplan-3d](https://github.com/wy51ai/floorplan-3d)
+projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UCUNCU-TARAF-LISANSLARI.md).
 
-**2D 平面布置**
-- 按原始户型 1:60 / 1:100 比例显示，尺寸单位 mm
-- 从左侧家具库拖入 60 余种家具家电（卧室、客厅、餐厨、卫浴、家电、书房休闲）
-- 拖动移动、旋转（Shift 自由角度）、调整尺寸，贴墙自动吸附
-- 测量工具（靠近墙面自动吸附，Shift 锁定水平 / 垂直）
-- 拆改非承重墙，承重墙单独标示
-- 图层开关：尺寸标注、房间名、家具、网格、承重墙
+## Özellikler
 
-**3D 场景**
-- 鸟瞰、斜视、俯视多种视角，点击房间列表可飞到对应房间
-- 漫游模式：桌面端 WASD + 鼠标，触屏设备用虚拟摇杆，可以点门开关
-- 全高墙 / 剖切墙切换，日照时间滑块，夜景灯光
-- 精细家具模型：柜门分缝与拉手、软包床头、带环境反射的金属与陶瓷材质等
-- 在 3D 中也能选中、拖动家具，与 2D 方案实时同步
+**2B plan**
+- 1:50 / 1:100 ölçekte gösterim; ölçüler cm, alanlar m²
+- Kütüphaneden sürükle-bırak; döndürme (Shift: serbest açı), boyutlandırma, duvara yaslama
+- Ölçü aracı (duvara yapışır, Shift yatay/düşey kilitler)
+- Taşıyıcı olmayan duvarı yıkma; taşıyıcı duvarlar ayrı gösterilir
+- Katmanlar: ölçüler, mahal adları, mobilya, ızgara, taşıyıcılar
 
-**方案与统计**
-- 房间面积与套内使用面积自动统计
-- 为每个房间更换地面材料（木地板、地砖、大理石、水磨石、地毯等），按面积加 5% 损耗估算造价
-- 撤销 / 重做，方案自动保存在浏览器本地
-- 中文 / English 界面切换（顶栏右侧按钮，默认中文，选择会记住）
-- 导出 PNG 图片，导出 / 导入方案 JSON
+**3B sahne**
+- Yörünge, perspektif ve tepeden görünüm; mahal listesinden mahale uçuş
+- Gezinti: masaüstünde WASD + fare, dokunmatikte sanal çubuk; kapılar açılır
+- Tam / kesit duvar, gün ışığı saati, gece aydınlatması
+- 3B'de de mobilya seçilip taşınır, 2B ile eşzamanlıdır
 
-## 快速开始
+**Tefriş kütüphanesi (YH11)** — `js/kutuphane.js`
+- Türkiye'de yaygın ölçüler: 160×200 / 180×200 yatak, 60 cm tezgâh, 35 cm üst dolap,
+  80×80 / 90×90 / 80×120 duşakabin, 170×70 küvet, 60×60 beyaz eşya
+- Yerel donatılar: kombi, panel radyatör, havlupan, hela taşı, çekyat, berjer, zigon sehpa
+- Kütüphanede arama
 
-```bash
-git clone <仓库地址>
-cd <仓库目录>
-```
+**Plan özeti ve Pusula (YH13)**
+- Mahal alanları, net kullanım alanı, döşeme maliyet tahmini (%5 fire, ₺)
+- «Pusula'ya aktar»: önizleme + kullanıcı onayıyla
+  - yeni **teklif** (Taslak, sıradaki TKL no, plan özeti notta),
+  - yeni **proje** (Tasarım kategorisi) ya da **mevcut projeye** ekleme;
+    plan görseli (PNG) ve plan dosyası (JSON) projenin `07 Belgeler` klasörüne yüklenir.
+- Pusula'ya veri yalnız kullanıcının işlemiyle, Pusula API'si üzerinden girer
+  (ozluk/tarus.md §4.2 "Veri girişi").
 
-然后直接用浏览器打开 `index.html`。也可以起一个本地静态服务器：
+**Kabuk**
+- tarus-standartlar teması (8 tema, `tarus-theme` çereziyle uygulamalar arası ortak),
+  toolbar reçetesi, Lucide ikonları, Inter yazı tipi
+- Pusula SSO (belirteçler yalnız bellekte), kullanıcı menüsü, Hakkında ve sürüm notları
+- Sağ tık menüsü ve hata bildirimi (çizim alanı dışında)
+- Plan tarayıcıda (`localStorage`) saklanır; PNG / JSON indirme ve JSON yükleme
+
+## Çalıştırma
+
+Derleme adımı yoktur; statik dosyalar olarak sunulur.
 
 ```bash
 python3 -m http.server 8000
-# 访问 http://localhost:8000
+# http://localhost:8000
 ```
 
-> Three.js 通过 jsDelivr CDN 加载，首次打开 3D 场景需要联网。
+Yerelde (localhost) Pusula'ya otomatik yönlendirme yapılmaz; uygulama "Yerel
+çalışma" modunda açılır, Pusula işlemleri kullanıcı menüsündeki
+«Pusula'ya bağlan» ile başlar. three.js jsDelivr'dan yüklenir; 3B için internet gerekir.
 
-## 快捷键
+## Testler
 
-| 按键 | 作用 |
+```bash
+npm test          # birim testleri (node:test): aktarım, kütüphane, Türkçeleştirme, sürüm
+npm run test:e2e  # Playwright ile uçtan uca: Pusula taklit edilerek giriş, teklif, proje, Arkiv yüklemesi
+```
+
+## Yayın
+
+Coolify'da Dockerfile ile (Caddy, statik). Adımlar: [docs/RUNBOOK-yayin.md](docs/RUNBOOK-yayin.md).
+
+## Kısayollar
+
+| Tuş | İşlev |
 | --- | --- |
-| `T` | 切换 2D / 3D |
-| `V` / `M` / `X` | 选择 / 测量 / 拆改墙体 |
-| `R` / `Shift+R` | 选中家具顺时针 / 逆时针旋转 90° |
-| `Delete` / `Backspace` | 删除选中家具 |
-| `Ctrl/⌘ + D` | 复制选中家具 |
-| `Ctrl/⌘ + Z`，`Ctrl/⌘ + Shift + Z` | 撤销，重做 |
-| `F` | 适应窗口 |
-| `+` / `-` | 放大 / 缩小 |
-| `[` / `]` | 展开 / 收起左侧家具库、右侧面板 |
-| `Shift + F` | 全屏 |
-| `Esc` | 取消当前操作 |
-| 漫游：`WASD` / 方向键，`Shift`，`E` | 移动，快走，开关门 |
+| `T` | 2B / 3B geçişi |
+| `V` / `M` / `X` | Seç / ölçü / duvar yık |
+| `R` / `Shift+R` | Seçili mobilyayı 90° saat yönünde / tersine döndür |
+| Ok tuşları (`Shift`) | 1 cm (10 cm) kaydır |
+| `Delete` / `Backspace` | Seçili mobilyayı sil |
+| `Ctrl/⌘ + D` | Çoğalt |
+| `Ctrl/⌘ + Z`, `Ctrl/⌘ + Shift + Z` | Geri al, yinele |
+| `F` | Pencereye sığdır |
+| `+` / `-` | Yakınlaştır / uzaklaştır |
+| `[` / `]` | Kütüphane / özellikler panelini aç-kapat |
+| `Shift + F` | Tam ekran |
+| `Esc` | Seçimi bırak / işlemi iptal et |
+| Gezinti: `WASD` / oklar, `Shift`, `E` | Yürü, hızlı, kapıyı aç |
 
-## 技术栈
+## Dosyalar
 
-- 原生 HTML / CSS / JavaScript，无框架、无构建步骤
-- 2D 平面图用 SVG 绘制
-- 3D 场景用 [Three.js](https://threejs.org/) r160（OrbitControls、PointerLockControls、RoundedBoxGeometry、RoomEnvironment、CSS2DRenderer）
-- 数据保存在 `localStorage`
-
-## 自定义户型
-
-户型数据写在 `index.html` 里：
-
-- `ROOMS`：房间多边形、名称、默认地面材料
-- `WALLS` / `WINS`：墙体与窗洞
-- `MATS`：地面材料名称与单价
-- `LIB`：家具库（类型、名称、默认尺寸、颜色）
-- `buildFurniture()`：各类家具的 3D 模型
-
-改这些数据就能换成自己的户型。
+| Dosya | İçerik |
+| --- | --- |
+| `index.html` | Plan verisi (`ROOMS`, `WALLS`, `WINS`, `MATS`), 2B düzenleyici, 3B sahne |
+| `js/kutuphane.js` | Tefriş kütüphanesi (ölçüler cm) |
+| `js/kabuk.js` | Toast, diyalog, menüler, tema seçici, Hakkında, Pusula oturumu, «Pusula'ya aktar» |
+| `js/pusula-oturum.js` | Pusula SSO (Model 3.0.0 deseni) |
+| `js/pusula-aktar.js` | Plan özeti ve Pusula teklif/proje/Arkiv istekleri |
+| `js/tema.js`, `js/ikonlar.js`, `js/surum.js` | Tema çerezi, Lucide ikonları, sürüm ve notlar |
+| `styles/tarus.css`, `styles/tarus-toolbar.css`, `public/tarus-context-menu.js` | ozluk/tarus-kabuk'tan bayt bayt kopya |
+| `styles/tasarla.css` | Uygulama stilleri |

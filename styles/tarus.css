@@ -1,0 +1,555 @@
+/* ════════════════════════════════════════════════════════════════════
+   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.1.0)
+
+   Kaynak: Pusula Frontend/index.css (ekosistem standardı, 2026-09-28).
+   Düz CSS'tir; Tailwind gerektirmez (Belge gibi statik kabuklar da kullanır).
+   Temalar: Karanlık (varsayılan, :root) · Modern · Adaçayı · Okyanus ·
+   Orman · Günbatımı · Menekşe · Kum. Tema sınıfı <html>'e ya da uygulama
+   köküne verilir: class="theme-ocean".
+
+   KURAL: Değer değişikliği önce burada yapılır, sonra uygulamalara
+   dağıtılır (bkz. README). Uygulamaya özgü değerler (ör. --brand)
+   uygulama CSS'inde bu dosyadan SONRA ezilir.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────────────────────
+   Tarus design tokens
+   Temalar: Karanlık · Modern · Okyanus · Orman · Günbatımı · Menekşe · Kum
+   ──────────────────────────────────────────────────────────── */
+/* Karanlık varsayılan tokenlar hem :root'ta hem .theme-karanlik sınıfında tanımlı:
+   böylece bir eleman (örn. Ayarlar'daki tema önizleme kutusu) `theme-karanlik`
+   sınıfıyla bu değerleri okuyabilir — sadece :root'ta olsaydı aktif temayı
+   miras alır ve yanlış renk gösterirdi. */
+:root,
+.theme-karanlik {
+  /* Native select / date popup — koyu varsayılan */
+  color-scheme: dark;
+
+  /* Karanlık — tarus-portal :root */
+  --bg:        #050505;
+  --surface:   #080808;
+  --card:      #111111;
+  --card-2:    rgba(255,255,255,0.02);
+  --border:    rgba(255,255,255,0.07);
+  --border-2:  rgba(255,255,255,0.05);
+  --text:      #f3f4f6;
+  --muted2:    #b8bcc4;
+  --muted:     #8a8aaa;
+  --accent:    #2563eb;
+  --action-primary: var(--accent);
+  --accent-lt: #60a5fa;
+  --success:   #10b981;
+  --warning:   #f59e0b;
+  --danger:    #ef4444;
+
+  /* Marka renkleri — Pusula bordosu */
+  --brand:     #6b0f2b;
+  --brand-lt:  #c4576e;
+  --brand-glow: 0 4px 12px rgba(107,15,43,0.35);
+
+  /* Alias tokens — bileşenler bu isimleri kullanır */
+  --bg-color:      var(--bg);
+  --card-bg:       var(--card);
+  --sidebar-color: #080808;
+  --modal-bg:      #111111;
+  --popup-bg:      #111111;
+  --input-bg:      rgba(255,255,255,0.05);
+  --text-primary:  var(--text);
+  --text-secondary:var(--muted2);
+  --border-color:  var(--border);
+  --radius:        var(--r-xl);
+  --page-padding:  16px;
+
+  /* Katman skalası (tarus.md §17) — ekosistem standardı, portal ile birebir */
+  --glass-bg: rgba(255,255,255,0.03);
+  --ovl-1:   rgba(255,255,255,0.02);
+  --ovl-2:   rgba(255,255,255,0.035);
+  --ovl-3:   rgba(255,255,255,0.05);
+  --ovl-4:   rgba(255,255,255,0.10);
+  --ovl-5:   rgba(255,255,255,0.20);
+  --bdr-1:   rgba(255,255,255,0.05);
+  --bdr-2:   rgba(255,255,255,0.10);
+  --bdr-3:   rgba(255,255,255,0.20);
+  --divider: rgba(255,255,255,0.05);
+
+  /* Yükselti (elevation) */
+  --elev-1: 0 1px 2px rgba(0,0,0,.20), 0 4px 12px rgba(0,0,0,.30), 0 0 8px rgba(0,0,0,.18);
+  --elev-2: 0 2px 4px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.40), 0 0 12px rgba(0,0,0,.22);
+  --ring:   inset 0 1px 0 rgba(255,255,255,.05);
+  --r-xs:          4px;
+  --r-3xl:        24px;
+  --r-modal:      32px;
+
+  /* Layout */
+  --max-w-base:   1600px;
+  --max-w-narrow:  720px;
+  --max-w-prose:   960px;
+
+  /* Spacing scale */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
+
+  /* Radius */
+  --r-sm:    8px;
+  --r-md:   10px;
+  --r-lg:   12px;
+  --r-xl:   14px;
+  --r-2xl:  18px;
+  --r-pill: 100px;
+}
+.theme-modern {
+  color-scheme: light;
+  /* tarus.md §9 kanonik değerleri (portal v2.64 ile senkron) */
+  --bg:             #f1f5f9;
+  /* v3.14 (hesap ile senkron) — surface artik card ile ayni degil (kontrast sifirdi) */
+  --surface:        #e2e8f0;
+  --card:           #ffffff;
+  --card-2:         rgba(15,23,42,0.03);
+  --border:         rgba(15,23,42,0.10);
+  --border-2:       rgba(15,23,42,0.06);
+  --text:           #0f172a;
+  /* portal v2.64: beyaz zeminde AA'ya çekildi (eski #64748b/#94a3b8 → 2.56:1 fail) */
+  --muted2:         #475569;
+  --muted:          #64748b;
+  --accent:         #2563eb;
+  --accent-lt:      #60a5fa;
+  --success:        #10b981;
+  --warning:        #f59e0b;
+  --danger:         #ef4444;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #e2e8f0;
+  --modal-bg:       #ffffff;
+  --popup-bg:       #ffffff;
+  --input-bg:       rgba(15,23,42,0.04);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  /* Açık temada katman tinti KOYU olmalı — beyaz kart üstünde beyaz görünmez */
+  --ovl-1:          rgba(15,23,42,0.02);
+  --ovl-2:          rgba(15,23,42,0.03);
+  --ovl-3:          rgba(15,23,42,0.045);
+  --ovl-4:          rgba(15,23,42,0.075);
+  --ovl-5:          rgba(15,23,42,0.13);
+  --bdr-1:          rgba(15,23,42,0.06);
+  --bdr-2:          rgba(15,23,42,0.10);
+  --bdr-3:          rgba(15,23,42,0.16);
+  --divider:        rgba(15,23,42,0.08);
+  --glass-bg:       var(--card);
+  --elev-1:         0 1px 2px rgba(15,23,42,.04), 0 4px 12px rgba(15,23,42,.08), 0 0 8px rgba(15,23,42,.04);
+  --elev-2:         0 2px 4px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.12), 0 0 12px rgba(15,23,42,.06);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.85);
+}
+.theme-sage {
+  color-scheme: light;
+  --bg:             #f3f7f4;
+  --surface:        #e5eee8;
+  --card:           #fbfdfb;
+  --card-2:         rgba(28,78,51,0.025);
+  --border:         rgba(27,67,45,0.10);
+  --border-2:       rgba(27,67,45,0.06);
+  --text:           #17231b;
+  --muted2:         #4d6355;
+  --muted:          #687d6e;
+  --accent:         #287b52;
+  --accent-lt:      #246e4a;
+  --success:        #15803d;
+  --warning:        #b7791f;
+  --danger:         #c2413c;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #e5eee8;
+  --modal-bg:       #ffffff;
+  --popup-bg:       #ffffff;
+  --input-bg:       rgba(28,78,51,0.035);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  --ovl-1:          rgba(28,78,51,0.025);
+  --ovl-2:          rgba(28,78,51,0.04);
+  --ovl-3:          rgba(28,78,51,0.06);
+  --ovl-4:          rgba(28,78,51,0.10);
+  --ovl-5:          rgba(28,78,51,0.17);
+  --bdr-1:          rgba(27,67,45,0.07);
+  --bdr-2:          rgba(27,67,45,0.12);
+  --bdr-3:          rgba(27,67,45,0.20);
+  --divider:        rgba(27,67,45,0.09);
+  --glass-bg:       var(--card);
+  --elev-1:         0 1px 2px rgba(23,35,27,.04), 0 4px 12px rgba(23,35,27,.08), 0 0 8px rgba(23,35,27,.04);
+  --elev-2:         0 2px 6px rgba(23,35,27,.08), 0 18px 44px rgba(23,35,27,.12);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.85);
+}
+.theme-ocean {
+  color-scheme: dark;
+  --bg:             #0f172a;
+  --surface:        #080C16;
+  --card:           #1e293b;
+  --card-2:         rgba(255,255,255,0.03);
+  --border:         rgba(148,163,184,0.18);
+  --border-2:       rgba(148,163,184,0.10);
+  --text:           #f1f5f9;
+  --muted2:         #c5d2e0;
+  --muted:          #94a3b8;
+  --accent:         #3b82f6;
+  --accent-lt:      #60a5fa;
+  --success:        #10b981;
+  --warning:        #f59e0b;
+  --danger:         #ef4444;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #080C16;
+  --modal-bg:       #1e293b;
+  --popup-bg:       #1e293b;
+  --input-bg:       rgba(59,130,246,0.06);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  --ovl-1:          rgba(59,130,246,0.05);
+  --ovl-2:          rgba(59,130,246,0.07);
+  --ovl-3:          rgba(59,130,246,0.09);
+  --ovl-4:          rgba(59,130,246,0.14);
+  --ovl-5:          rgba(59,130,246,0.24);
+  --bdr-1:          rgba(148,163,184,0.14);
+  --bdr-2:          rgba(148,163,184,0.22);
+  --bdr-3:          rgba(148,163,184,0.34);
+  --divider:        rgba(148,163,184,0.18);
+  --glass-bg:       rgba(255,255,255,0.03);
+  --elev-1:         0 1px 2px rgba(0,0,0,.20), 0 4px 12px rgba(0,0,0,.30), 0 0 8px rgba(0,0,0,.18);
+  --elev-2:         0 2px 6px rgba(0,0,0,.50), 0 18px 44px rgba(0,0,0,.45);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.05);
+}
+.theme-forest {
+  color-scheme: dark;
+  --bg:             #0b1310;
+  --surface:        #0f1a16;
+  --card:           #16241e;
+  --card-2:         rgba(180,200,190,0.04);
+  --border:         rgba(180,200,190,0.16);
+  --border-2:       rgba(180,200,190,0.09);
+  --text:           #e9efec;
+  --muted2:         #b0c2b8;
+  --muted:          #859a8f;
+  --accent:         #059669;
+  --accent-lt:      #34d399;
+  --success:        #34d399;
+  --warning:        #facc15;
+  --danger:         #f87171;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #0f1a16;
+  --modal-bg:       #16241e;
+  --popup-bg:       #16241e;
+  --input-bg:       rgba(180,200,190,0.06);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  --ovl-1:          rgba(180,200,190,0.03);
+  --ovl-2:          rgba(180,200,190,0.05);
+  --ovl-3:          rgba(180,200,190,0.07);
+  --ovl-4:          rgba(180,200,190,0.12);
+  --ovl-5:          rgba(180,200,190,0.22);
+  --bdr-1:          rgba(180,200,190,0.09);
+  --bdr-2:          rgba(180,200,190,0.16);
+  --bdr-3:          rgba(180,200,190,0.28);
+  --divider:        rgba(180,200,190,0.11);
+  --glass-bg:       rgba(22,36,30,0.85);
+  --elev-1:         0 1px 2px rgba(0,0,0,.20), 0 4px 12px rgba(0,0,0,.30), 0 0 8px rgba(0,0,0,.18);
+  --elev-2:         0 2px 6px rgba(0,0,0,.52), 0 18px 44px rgba(0,0,0,.46);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.05);
+}
+.theme-sunset {
+  color-scheme: dark;
+  --bg:             #16100d;
+  --surface:        #1e1613;
+  --card:           #261d18;
+  --card-2:         rgba(214,198,188,0.04);
+  --border:         rgba(214,198,188,0.16);
+  --border-2:       rgba(214,198,188,0.09);
+  --text:           #f3ebe5;
+  --muted2:         #c6b4a9;
+  --muted:          #9a887d;
+  --accent:         #ea580c;
+  --accent-lt:      #fb923c;
+  --success:        #34d399;
+  --warning:        #fbbf24;
+  --danger:         #f43f5e;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #1e1613;
+  --modal-bg:       #261d18;
+  --popup-bg:       #261d18;
+  --input-bg:       rgba(214,198,188,0.06);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  --ovl-1:          rgba(214,198,188,0.03);
+  --ovl-2:          rgba(214,198,188,0.05);
+  --ovl-3:          rgba(214,198,188,0.07);
+  --ovl-4:          rgba(214,198,188,0.12);
+  --ovl-5:          rgba(214,198,188,0.22);
+  --bdr-1:          rgba(214,198,188,0.09);
+  --bdr-2:          rgba(214,198,188,0.16);
+  --bdr-3:          rgba(214,198,188,0.28);
+  --divider:        rgba(214,198,188,0.11);
+  --glass-bg:       rgba(38,29,24,0.85);
+  --elev-1:         0 1px 2px rgba(0,0,0,.20), 0 4px 12px rgba(0,0,0,.30), 0 0 8px rgba(0,0,0,.18);
+  --elev-2:         0 2px 6px rgba(0,0,0,.52), 0 18px 44px rgba(0,0,0,.46);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.05);
+}
+.theme-violet {
+  color-scheme: dark;
+  --bg:             #0f0518;
+  --surface:        #1a0a2e;
+  --card:           #2a1248;
+  --card-2:         rgba(232,121,249,0.06);
+  --border:         rgba(232,121,249,0.30);
+  --border-2:       rgba(232,121,249,0.16);
+  --text:           #fdf4ff;
+  --muted2:         #e9d5ff;
+  --muted:          #c084fc;
+  --accent:         #d946ef;
+  --accent-lt:      #e879f9;
+  --success:        #34d399;
+  --warning:        #fbbf24;
+  --danger:         #fb7185;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #1a0a2e;
+  --modal-bg:       #2a1248;
+  --popup-bg:       #2a1248;
+  --input-bg:       rgba(232,121,249,0.08);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  --ovl-1:          rgba(232,121,249,0.04);
+  --ovl-2:          rgba(232,121,249,0.06);
+  --ovl-3:          rgba(232,121,249,0.08);
+  --ovl-4:          rgba(232,121,249,0.14);
+  --ovl-5:          rgba(232,121,249,0.24);
+  --bdr-1:          rgba(232,121,249,0.16);
+  --bdr-2:          rgba(232,121,249,0.30);
+  --bdr-3:          rgba(232,121,249,0.44);
+  --divider:        rgba(232,121,249,0.20);
+  --glass-bg:       rgba(42,18,72,0.85);
+  --elev-1:         0 1px 2px rgba(0,0,0,.20), 0 4px 12px rgba(0,0,0,.30), 0 0 8px rgba(0,0,0,.18);
+  --elev-2:         0 2px 6px rgba(0,0,0,.52), 0 18px 44px rgba(0,0,0,.46);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.05);
+}
+.theme-sand {
+  color-scheme: light;
+  --bg:             #f4ece0;
+  --surface:        #e7dbc9;
+  --card:           #fdf8f0;
+  --card-2:         rgba(120,85,55,0.04);
+  --border:         rgba(120,85,55,0.18);
+  --border-2:       rgba(120,85,55,0.10);
+  --text:           #2b221a;
+  --muted2:         #6f5c46;
+  --muted:          #97836a;
+  --accent:         #b45309;
+  --accent-lt:      #d97706;
+  --success:        #047857;
+  --warning:        #b45309;
+  --danger:         #b91c1c;
+  --bg-color:       var(--bg);
+  --card-bg:        var(--card);
+  --sidebar-color:  #e7dbc9;
+  --modal-bg:       #fdf8f0;
+  --popup-bg:       #fdf8f0;
+  --input-bg:       rgba(120,85,55,0.05);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted2);
+  --border-color:   var(--border);
+  /* Açık tema — katman tinti koyulaşarak iner (bkz. .theme-modern) */
+  --ovl-1:          rgba(120,85,55,0.025);
+  --ovl-2:          rgba(120,85,55,0.04);
+  --ovl-3:          rgba(120,85,55,0.055);
+  --ovl-4:          rgba(120,85,55,0.09);
+  --ovl-5:          rgba(120,85,55,0.16);
+  --bdr-1:          rgba(120,85,55,0.10);
+  --bdr-2:          rgba(120,85,55,0.18);
+  --bdr-3:          rgba(120,85,55,0.30);
+  --divider:        rgba(120,85,55,0.14);
+  --glass-bg:       var(--card);
+  --elev-1:         0 1px 2px rgba(69,45,20,.04), 0 4px 12px rgba(69,45,20,.08), 0 0 8px rgba(69,45,20,.04);
+  --elev-2:         0 2px 6px rgba(69,45,20,.10), 0 18px 44px rgba(69,45,20,.14);
+  --ring:           inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+/* Üst çubuk ve kenar çubuğu yüzeyi: bdr-2 kenarlık + elev-1 gölge.
+   Pusula'da <header> ve <aside> "rounded-tarus tarus-surface-card" kullanır. */
+@layer components {
+  .tarus-surface-card {
+    border-color: var(--bdr-2);
+    box-shadow: var(--elev-1), var(--ring) !important;
+  }
+}
+
+/* Kenar çubuğu seçili satırı — Pusula standardı. Uygulamaların kendi eski
+   kuralları (yalnız --elev-1, ışımasız vb.) ne olursa olsun aynı görünsün diye
+   !important. Belge .active / .tarus-nav-item.active kullanıyor. */
+:is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 18%, transparent), var(--elev-1) !important;
+  color: var(--accent-lt) !important;
+}
+/* Açık temalar: dar gezinme alanında yüzeyden net ayrışan opak zemin ve gölge. */
+:is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--card)) !important;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--bdr-2)) !important;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.10), 0 8px 16px rgba(15, 23, 42, 0.08) !important;
+  color: var(--accent) !important;
+}
+:is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(svg, span, div, p) {
+  color: var(--accent) !important;
+}
+
+/* ── Bildirim penceresi (components/NotificationBell.tsx) ─────────────────
+   Görünüm Pusula'nınki (kullanıcı kararı 2026-09-29); değerler Pusula'da
+   ölçüldü. Uygulamaların Tailwind temaları, sıfırlama katmanı (Çizge'de yok)
+   ve kendi kuralları aynı sınıfı farklı çizdiği için pencere yalnız bu
+   dosyadaki `tarus-bildirim-*` sınıflarıyla çizilir. Seçiciler `.tarus-bildirim`
+   altında (0,2,0): uygulamaların tek sınıflık kuralları bunları ezemez. */
+.tarus-bildirim { position: relative; display: inline-flex; }
+/* Pusula harf aralığını her yerde sıfırlıyor (index.html: * { letter-spacing: 0 }). */
+.tarus-bildirim, .tarus-bildirim * { letter-spacing: 0; }
+.tarus-bildirim :is(button, ul, li, p) { margin: 0; }
+.tarus-bildirim button { font: inherit; letter-spacing: normal; text-transform: none; cursor: pointer; }
+.tarus-bildirim button:disabled { cursor: not-allowed; }
+.tarus-bildirim ul { list-style: none; padding: 0; }
+.tarus-bildirim .tarus-bildirim-sayi {
+  position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 10px; font-weight: 900; line-height: 15px;
+}
+.tarus-bildirim .tarus-bildirim-pencere {
+  width: 390px; max-width: calc(100vw - 32px); max-height: min(70vh, 640px);
+  display: flex; flex-direction: column; overflow: hidden; text-align: left;
+  background: var(--card); color: var(--text); border: 1px solid var(--bdr-2); border-radius: 14px;
+  box-shadow: var(--elev-2), var(--ring);
+  font-size: 16px; line-height: 24px; font-weight: 400;
+}
+@media (max-width: 1023px) {
+  .tarus-bildirim .tarus-bildirim-pencere { position: fixed; top: 88px; left: 12px; right: 12px; width: auto; max-width: none; }
+}
+.tarus-bildirim .tarus-bildirim-baslik {
+  flex-shrink: 0; min-height: 50px; padding: 16px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--bdr-1); background: var(--ovl-2);
+}
+.tarus-bildirim .tarus-bildirim-grup { display: flex; align-items: center; gap: 6px; }
+.tarus-bildirim .tarus-bildirim-baslik-yazi { font-size: 12px; line-height: 16px; font-weight: 900; color: var(--text-primary); }
+.tarus-bildirim .tarus-bildirim-kucuk { font-size: 10px; line-height: 15px; font-weight: 400; color: var(--text-secondary); }
+.tarus-bildirim .tarus-bildirim-mavi { color: oklch(62.3% 0.214 259.815); }
+.tarus-bildirim .tarus-bildirim-ikon {
+  width: 20px; height: 20px; padding: 4px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 4px; background: transparent; color: var(--text-secondary);
+}
+.tarus-bildirim .tarus-bildirim-ikon:hover { background: var(--ovl-3); color: var(--text-primary); }
+.tarus-bildirim .tarus-bildirim-ikon:disabled { opacity: .6; background: transparent; color: var(--text-secondary); }
+.tarus-bildirim .tarus-bildirim-sekmeler {
+  flex-shrink: 0; position: relative; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border-color);
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.tarus-bildirim .tarus-bildirim-sekmeler::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.tarus-bildirim .tarus-bildirim-sekme {
+  height: 28px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap; border: 1px solid transparent; border-radius: 4px; background: transparent;
+  color: var(--muted2); font-size: 10px; line-height: 1; font-weight: 700;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.tarus-bildirim .tarus-bildirim-sekme:hover { background: var(--ovl-3); color: var(--text); }
+.tarus-bildirim .tarus-bildirim-sekme.is-active {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--bdr-2));
+  background: color-mix(in srgb, var(--accent) 12%, var(--ovl-3)); color: var(--text);
+}
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-bildirim .tarus-bildirim-sekme.is-active {
+  background-color: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--bdr-2)); box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .05);
+}
+.tarus-bildirim .tarus-bildirim-filtre-kutu { position: relative; }
+.tarus-bildirim .tarus-bildirim-filtre {
+  height: 28px; padding: 0 8px; display: flex; align-items: center; gap: 6px; border-radius: 4px;
+  border: 1px solid var(--border-color); background: var(--ovl-2); color: var(--text-secondary);
+  font-size: 10px; line-height: 15px; font-weight: 700; transition: all 150ms ease;
+}
+.tarus-bildirim .tarus-bildirim-filtre:hover { color: var(--text-primary); }
+.tarus-bildirim .tarus-bildirim-filtre.is-secili {
+  border-color: oklch(62.3% 0.214 259.815 / .6); background: oklch(62.3% 0.214 259.815 / .1); color: oklch(70.7% 0.165 254.624);
+}
+.tarus-bildirim .tarus-bildirim-filtre-etiket { max-width: 95px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarus-bildirim .tarus-bildirim-secenekler {
+  position: absolute; right: 0; top: 100%; margin-top: 4px; width: 192px; max-height: 224px; overflow-y: auto;
+  z-index: 50; padding: 4px 0; border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--popup-bg, var(--card)); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .25);
+}
+.tarus-bildirim .tarus-bildirim-secenek {
+  width: 100%; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  border: 0; background: transparent; text-align: left; color: var(--text-secondary);
+  font-size: 12px; line-height: 16px; font-weight: 400; transition: color 150ms ease, background-color 150ms ease;
+}
+.tarus-bildirim .tarus-bildirim-secenek:hover { background: var(--ovl-4); color: var(--text-primary); }
+.tarus-bildirim .tarus-bildirim-secenek.is-secili { background: oklch(62.3% 0.214 259.815 / .1); color: oklch(70.7% 0.165 254.624); font-weight: 700; }
+.tarus-bildirim .tarus-bildirim-secenek-sayi { font-size: 10px; opacity: .6; }
+.tarus-bildirim .tarus-bildirim-kaydir { flex: 1; min-height: 0; overflow-y: auto; }
+.tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar { width: 6px; height: 6px; }
+.tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar-track { margin: 0; border: 0; background: transparent; }
+.tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar-thumb { min-height: 28px; border: 0; border-radius: 999px; background: var(--accent); }
+.tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar-thumb:hover { background: var(--accent-lt); }
+:is(.theme-modern, .theme-sage) .tarus-bildirim .tarus-bildirim-kaydir::-webkit-scrollbar-thumb { background: #cbd5e1; }
+@supports not selector(::-webkit-scrollbar) {
+  .tarus-bildirim .tarus-bildirim-kaydir { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+  :is(.theme-modern, .theme-sage) .tarus-bildirim .tarus-bildirim-kaydir { scrollbar-color: #cbd5e1 transparent; }
+}
+.tarus-bildirim .tarus-bildirim-bos {
+  padding: 24px 12px; display: flex; flex-direction: column; align-items: center; text-align: center;
+  font-size: 10px; line-height: 15px; color: var(--text-secondary);
+}
+.tarus-bildirim .tarus-bildirim-bos svg { margin-bottom: 6px; opacity: .5; }
+.tarus-bildirim .tarus-bildirim-uyarilar { flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
+.tarus-bildirim .tarus-bildirim-uyari {
+  display: flex; align-items: flex-start; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--warning) 5%, transparent);
+}
+.tarus-bildirim .tarus-bildirim-uyari:last-child { border-bottom: 0; }
+.tarus-bildirim .tarus-bildirim-uyari.is-tiklanir { cursor: pointer; }
+.tarus-bildirim .tarus-bildirim-uyari.is-tiklanir:hover { background: color-mix(in srgb, var(--warning) 10%, transparent); }
+.tarus-bildirim .tarus-bildirim-uyari-etiket { font-size: 10px; line-height: 15px; font-weight: 900; color: var(--warning); }
+.tarus-bildirim .tarus-bildirim-satir {
+  display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border-color);
+}
+.tarus-bildirim .tarus-bildirim-satir:last-child { border-bottom: 0; }
+.tarus-bildirim .tarus-bildirim-satir.is-okunmamis { background: oklch(62.3% 0.214 259.815 / .05); }
+.tarus-bildirim .tarus-bildirim-icerik { flex: 1; min-width: 0; }
+.tarus-bildirim .tarus-bildirim-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.tarus-bildirim .tarus-bildirim-kategori { font-size: 10px; line-height: 15px; font-weight: 900; color: var(--text-secondary); }
+.tarus-bildirim .tarus-bildirim-nokta { margin-left: auto; width: 6px; height: 6px; flex-shrink: 0; border-radius: 999px; background: oklch(62.3% 0.214 259.815); }
+.tarus-bildirim .tarus-bildirim-satir-baslik {
+  display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap;
+  font-size: 12px; line-height: 16px; font-weight: 700; color: var(--text-primary);
+}
+.tarus-bildirim .tarus-bildirim-satir-baslik > span { overflow: hidden; text-overflow: ellipsis; }
+.tarus-bildirim .tarus-bildirim-satir-baslik > svg { flex-shrink: 0; }
+.tarus-bildirim .tarus-bildirim-metin {
+  margin-top: 2px; font-size: 10px; line-height: 15px; color: var(--text-secondary);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tarus-bildirim .tarus-bildirim-ac {
+  margin-top: 2px; padding: 0; display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent;
+  font-size: 10px; line-height: 15px; font-weight: 700; color: oklch(62.3% 0.214 259.815);
+}
+.tarus-bildirim .tarus-bildirim-ac:hover { color: oklch(70.7% 0.165 254.624); }
+.tarus-bildirim .tarus-bildirim-islemler { flex-shrink: 0; display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity 150ms ease; }
+.tarus-bildirim .tarus-bildirim-satir:hover .tarus-bildirim-islemler { opacity: 1; }
+.tarus-bildirim .tarus-bildirim-islemler .tarus-bildirim-ikon:hover { background: var(--ovl-4); }
+.tarus-bildirim .tarus-bildirim-sil {
+  width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--danger);
+}
+.tarus-bildirim .tarus-bildirim-sil:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.tarus-bildirim .seviye-info { color: oklch(62.3% 0.214 259.815); }
+.tarus-bildirim .seviye-success { color: var(--success); }
+.tarus-bildirim .seviye-warning { color: var(--warning); }
+.tarus-bildirim .seviye-error { color: var(--danger); }
