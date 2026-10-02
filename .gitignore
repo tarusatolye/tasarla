@@ -1,25 +1,26 @@
-# 系统文件
+# Sistem dosyaları
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# 编辑器 / IDE
+# Düzenleyici / IDE
 .idea/
 .vscode/
 *.swp
 *~
 
-# 依赖与构建产物（如以后引入）
+# Bağımlılıklar ve çıktılar
 node_modules/
 dist/
 build/
+test-results/
 
-# 日志与临时文件
+# Günlük ve geçici dosyalar
 *.log
 npm-debug.log*
 .cache/
 tmp/
 
-# 环境变量
+# Ortam değişkenleri
 .env
 .env.*

@@ -1,0 +1,454 @@
+/* tarus toolbar reçetesi — TEK KAYNAK: ozluk/tarus-kabuk/css/tarus-toolbar.css
+   Pusula Frontend/index.css'ten kural kural çıkarıldı (2026-10-02). Uygulamalara
+   styles/tarus-toolbar.css olarak bayt bayt kopyalanır, index.css'te tarus.css'in
+   hemen ardından içe aktarılır; scripts/standart_denetim.py sapmayı yakalar.
+   Ölçü ve yerleşim kuralları: tarus-standartlar.md §tarusToolbar. Uygulamaya özel
+   ek toolbar kuralı uygulamanın index.css'inde kalır; burada değiştirilmez. */
+
+@layer components {
+  /* ── Pusula toolbar reçetesi ────────────────────────────────────────────
+     Dış kutu: en az 50px, dört yönde 6px padding, öğeler arası 12px.
+     Kontroller: 36px yükseklik. Metin butonları: sağ/sol 16px, ikon arası 6px.
+     Radius hiyerarşisi: dış yüzey 14px, doğrudan kontrol/segment 8px,
+     segment içi düğme 4px. Dolu accent yalnızca gerçek birincil aksiyon içindir.
+     Böylece input, sekme, ikon ve aksiyon butonları sayfadan bağımsız aynı
+     optik çizgiye oturur; yalnızca aktif/semantik renk duruma göre değişir. */
+  .tarus-toolbar {
+    display: flex;
+    min-height: 50px;
+    align-items: center;
+    gap: var(--spacing-m, 12px);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    padding: var(--spacing-xs, 6px);
+    border: 1px solid var(--bdr-1);
+    border-radius: var(--r-xl, 14px);
+    background: var(--ovl-3);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-input {
+    height: 36px;
+    min-width: 0;
+    border: 1px solid var(--bdr-2);
+    border-radius: var(--r-sm, 8px);
+    outline: none;
+    background: var(--input-bg, var(--ovl-3));
+    color: var(--text);
+    padding: 0 var(--spacing-m, 12px);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    transition: border-color 150ms ease, background-color 150ms ease, width 150ms ease;
+  }
+
+  .tarus-toolbar-input-with-icon {
+    padding-left: 36px;
+  }
+
+  .tarus-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: var(--muted2);
+    pointer-events: none;
+    width: 14px;
+    height: 14px;
+  }
+
+  .tarus-toolbar-input-with-clear {
+    padding-right: 32px;
+  }
+
+  /* Toolbar araması (2026-10-02, kullanıcı: "bu arama kutusunun bir standardı olmalı").
+     Bileşen: tarus-kabuk components/ui/TarusAramaKutusu.tsx. Genişlik Pusula'nın ana
+     liste sayfalarından (Projeler, Şantiye Sahaları, Dosyalar, Teklifler, Arşiv):
+     telefonda tam genişlik, 640px'ten sonra 224px, 1024px'ten sonra 288px.
+     `.is-fluid`: toolbar'da kalan alanı doldurur (Belgeler) ya da dar panelin
+     tamamını kaplar (Harita listesi). Sayfa genişliği değiştirmez; gerekirse
+     `.is-fluid` kullanılır. */
+  .tarus-toolbar-search {
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .tarus-toolbar-search {
+      width: 224px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .tarus-toolbar-search {
+      width: 288px;
+    }
+  }
+
+  .tarus-toolbar-search.is-fluid {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 160px;
+  }
+
+  .tarus-toolbar-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    transform: translateY(-50%);
+    border-radius: var(--r-xs, 4px);
+    color: var(--muted2);
+    cursor: pointer;
+    transition: color 150ms ease;
+  }
+
+  .tarus-toolbar-search-clear:hover {
+    color: var(--text);
+  }
+
+  /* Arama kutusunun açıklaması (placeholder) kutu yazısıyla aynı ölçüde: 14px/500,
+     soluk renk. Tarayıcılar placeholder'a kendi saydamlığını ekliyor (Firefox);
+     ölçü ve renk burada sabitlenir, sayfa ezmez. */
+  .tarus-toolbar-search .tarus-toolbar-input::placeholder {
+    color: var(--muted2);
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 1;
+  }
+
+  /* Aktif (odak) ve üzerine gelme stili, sınıf unutulsa da her toolbar aramasında
+     aynı: Pusula'nın `.tarus-toolbar-input-global` görünümü. */
+  .tarus-toolbar-search .tarus-toolbar-input:hover {
+    border-color: var(--bdr-3);
+  }
+
+  .tarus-toolbar-search .tarus-toolbar-input:focus {
+    background: var(--ovl-4);
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  /* type="search" tarayıcının kendi temizle düğmesini ve görünümünü getirir; ortak
+     X düğmesi kullanıldığı için kapatılır. */
+  .tarus-toolbar-search input[type="search"] {
+    appearance: none;
+  }
+
+  .tarus-toolbar-search input[type="search"]::-webkit-search-cancel-button,
+  .tarus-toolbar-search input[type="search"]::-webkit-search-decoration {
+    display: none;
+    appearance: none;
+  }
+
+  .tarus-toolbar-combobox {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .tarus-toolbar-input::placeholder {
+    color: var(--muted2);
+  }
+
+  .tarus-toolbar-input:focus {
+    border-color: var(--accent);
+    background: var(--ovl-4);
+  }
+
+  .tarus-toolbar-input-global {
+    background: var(--ovl-3);
+    border-color: var(--bdr-2);
+  }
+
+  .tarus-toolbar-input-global:hover {
+    border-color: var(--bdr-3);
+  }
+
+  .tarus-toolbar-input-global:focus {
+    background: var(--ovl-4);
+    border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .tarus-toolbar-button,
+  .tarus-toolbar-tab,
+  .tarus-toolbar-icon-button,
+  .tarus-toolbar-segment-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  }
+
+  .tarus-toolbar-button,
+  .tarus-toolbar-tab,
+  .tarus-toolbar-icon-button {
+    border-radius: var(--r-sm, 8px);
+  }
+
+  .tarus-toolbar-button,
+  .tarus-toolbar-tab {
+    height: 36px;
+    gap: var(--spacing-xs, 6px);
+    padding: 0 var(--spacing-l, 16px);
+    border: 1px solid transparent;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .tarus-toolbar-button-primary {
+    border-color: var(--action-primary);
+    background: var(--action-primary);
+    color: #fff;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--action-primary) 22%, transparent);
+  }
+
+  .tarus-toolbar-button-primary:hover {
+    opacity: 0.9;
+  }
+
+  .tarus-toolbar-button-secondary {
+    border-color: var(--bdr-2);
+    background: var(--ovl-3);
+    color: var(--muted2);
+  }
+
+  .tarus-toolbar-button-secondary:hover {
+    border-color: var(--bdr-3);
+    background: var(--ovl-4);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-button-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--accent-lt);
+  }
+
+  .tarus-toolbar-button-ghost:hover {
+    background: var(--ovl-3);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-button-danger {
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
+  }
+
+  .tarus-toolbar-button-danger:hover {
+    background: color-mix(in srgb, var(--danger) 18%, transparent);
+  }
+
+  .tarus-toolbar-button:disabled,
+  .tarus-toolbar-icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .tarus-toolbar-icon-button {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    padding: 0;
+    border: 1px solid var(--bdr-2);
+    background: var(--ovl-3);
+    color: var(--muted2);
+  }
+
+  .tarus-toolbar-icon-button:hover {
+    border-color: var(--bdr-3);
+    background: var(--ovl-4);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-segment {
+    display: inline-flex;
+    height: 36px;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 3px;
+    border: 1px solid var(--bdr-2);
+    border-radius: var(--r-sm, 8px);
+    background: var(--ovl-3);
+  }
+
+  .tarus-toolbar-segment-button {
+    height: 28px;
+    gap: var(--spacing-xs, 6px);
+    padding: 0 var(--spacing-m, 12px);
+    border: 1px solid transparent;
+    border-radius: var(--r-xs);
+    color: var(--muted2);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .tarus-toolbar-segment-button.is-icon-only {
+    width: 28px;
+    padding: 0;
+  }
+
+  .tarus-toolbar-segment-button:hover {
+    background: var(--ovl-3);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-tab:hover {
+    border-color: var(--bdr-1);
+    background: var(--ovl-3);
+    color: var(--text);
+  }
+
+  .tarus-toolbar-button.is-active,
+  .tarus-toolbar-tab.is-active,
+  .tarus-toolbar-icon-button.is-active,
+  .tarus-toolbar-segment-button.is-active {
+    border-color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--bdr-2));
+    background: var(--ovl-4);
+    background: color-mix(in srgb, var(--accent) 12%, var(--ovl-3));
+    color: var(--text);
+  }
+
+  .tarus-toolbar-button.is-active svg,
+  .tarus-toolbar-tab.is-active svg,
+  .tarus-toolbar-icon-button.is-active svg,
+  .tarus-toolbar-segment-button.is-active svg {
+    color: var(--accent-lt);
+  }
+
+  .tarus-toolbar-segment-button.is-danger {
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
+  }
+
+  .tarus-toolbar-button:focus-visible,
+  .tarus-toolbar-tab:focus-visible,
+  .tarus-toolbar-icon-button:focus-visible,
+  .tarus-toolbar-segment-button:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+    outline-offset: 2px;
+  }
+
+  .tarus-toolbar-meta {
+    display: inline-flex;
+    height: 36px;
+    align-items: center;
+    gap: var(--spacing-s, 8px);
+    flex-shrink: 0;
+    padding: 0 var(--spacing-m, 12px);
+    border: 1px solid var(--bdr-2);
+    border-radius: var(--r-sm, 8px);
+    background: var(--ovl-3);
+    color: var(--muted2);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .tarus-toolbar-meta.is-info {
+    border-color: color-mix(in srgb, var(--accent) 24%, var(--bdr-2));
+    background: color-mix(in srgb, var(--accent) 10%, var(--ovl-3));
+    color: var(--accent-lt);
+  }
+
+  .tarus-toolbar-title {
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .tarus-toolbar-divider {
+    width: 1px;
+    height: 20px;
+    flex-shrink: 0;
+    background: var(--bdr-2);
+  }
+
+  /* Geçiş katmanı: eski sayfalardaki toolbar işaretlemeleri yeni sınıflara
+     taşınana kadar yalnızca .tarus-toolbar bağlamında aynı optik sözleşmeyi
+     korur. Form/diğer sayfa butonlarını etkilemez. */
+  .tarus-toolbar :is(input, select):not(.tarus-toolbar-input) {
+    height: 36px;
+    min-height: 36px;
+    border-radius: var(--r-sm, 8px);
+  }
+
+  .tarus-toolbar button:not(.tarus-toolbar-button):not(.tarus-toolbar-tab):not(.tarus-toolbar-icon-button):not(.tarus-toolbar-segment-button) {
+    min-height: 36px;
+    border-radius: var(--r-sm, 8px);
+  }
+
+  .tarus-toolbar :is([class~="p-1"], [class~="p-0.5"]):not(.tarus-toolbar-segment) {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--bdr-2);
+    border-radius: var(--r-sm, 8px);
+    background: var(--ovl-3);
+  }
+
+  .tarus-toolbar :is([class~="p-1"], [class~="p-0.5"]):not(.tarus-toolbar-segment) > button:not(.tarus-toolbar-button):not(.tarus-toolbar-tab):not(.tarus-toolbar-icon-button):not(.tarus-toolbar-segment-button) {
+    min-width: 28px;
+    min-height: 28px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--r-xs, 4px);
+  }
+
+  .tarus-toolbar button:not(.tarus-toolbar-button):not(.tarus-toolbar-tab):not(.tarus-toolbar-icon-button):not(.tarus-toolbar-segment-button)[class*="bg-blue-600"] {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #fff;
+  }
+
+  .tarus-toolbar button:not(.tarus-toolbar-button):not(.tarus-toolbar-tab):not(.tarus-toolbar-icon-button):not(.tarus-toolbar-segment-button)[class*="hover:bg-blue-500"]:hover {
+    background-color: color-mix(in srgb, var(--accent) 88%, white);
+  }
+}
+
+/* Açık temalarda (modern, kum, adaçayı) seçili kontrol kartla birleşmesin; birincil
+   aksiyonun metni genel `.text-white` telafisine takılmasın. */
+:is(.theme-modern, .theme-sand, .theme-sage) :is(
+  .tarus-button-primary,
+  .tarus-toolbar-button-primary
+),
+:is(.theme-modern, .theme-sand, .theme-sage) :is(
+  .tarus-button-primary,
+  .tarus-toolbar-button-primary
+) :is(svg, span, p, div, strong, b) {
+  color: #ffffff !important;
+}
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-button.is-active,
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-tab.is-active,
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-icon-button.is-active,
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-segment-button.is-active {
+  background-color: color-mix(in srgb, var(--accent) 12%, var(--card)) !important;
+  color: var(--accent) !important;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--bdr-2)) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-button.is-active :is(svg, span, div, p),
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-tab.is-active :is(svg, span, div, p),
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-icon-button.is-active :is(svg, span, div, p),
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-segment-button.is-active :is(svg, span, div, p) {
+  color: var(--accent) !important;
+}
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-button.is-active .tarus-filter-count {
+  color: #ffffff !important;
+}
