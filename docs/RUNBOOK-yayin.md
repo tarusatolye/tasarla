@@ -5,7 +5,7 @@ Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
 
 ## 0. Ön koşul — Pusula
 
-1. Pusula'da `tasarla.tarus.tr` köken izni (pusula PR'ı, dal `claude/tasarla-entegrasyon`):
+1. Pusula'da `tasarla.tarus.tr` köken izni (pusula#128):
    `Backend/backend/settings.py` → `EKOSISTEM_ORIGINS`. Bu tek satır hem oturumlu
    CORS'u hem SSO dönüş adresi denetimini (`/auth/sso/authorize/?return=`) açar.
 2. PR birleşince Pusula'yı Coolify'da yeniden yayınla.
