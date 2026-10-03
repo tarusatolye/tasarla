@@ -378,10 +378,17 @@
       payload.meta.app = window.location.hostname;
       var headers = { 'Content-Type': 'application/json' };
       try {
-        // Posta Pusula'ya çerezle değil Bearer ile bağlı; diğerleri Pusula çerezini taşır.
-        var postaToken = window.localStorage && window.localStorage.getItem('posta_access_token');
-        if (postaToken) headers.Authorization = 'Bearer ' + postaToken;
-      } catch (err) { /* depolama kapalı */ }
+        // Ekosistem uygulamaları (Posta, Belge, Çizge, Model…) Pusula'ya Bearer ile
+        // bağlı; token yalnız bellekte, pusulaOturumu.ts onu window.__<uygulama>GetAccessToken
+        // ile verir (localStorage okunmaz, tarus.md §5.2). Ofis uygulamaları Pusula
+        // çerezini taşır.
+        Object.keys(window).some(function (anahtar) {
+          if (!/^__[a-z]+GetAccessToken$/.test(anahtar)) return false;
+          var token = typeof window[anahtar] === 'function' ? window[anahtar]() : null;
+          if (token) headers.Authorization = 'Bearer ' + token;
+          return !!token;
+        });
+      } catch (err) { /* yoksay */ }
 
       var showError = function (text) {
         msgDiv.className = 'tarus-fb-msg is-error';
