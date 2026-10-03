@@ -398,7 +398,7 @@
 :is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) {
   background: color-mix(in srgb, var(--accent) 12%, var(--card)) !important;
   border-color: color-mix(in srgb, var(--accent) 28%, var(--bdr-2)) !important;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.10), 0 8px 16px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important; /* tarus-bilesen.css ve Pusula ile aynı (2026-10-03) */
   color: var(--accent) !important;
 }
 :is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(svg, span, div, p) {
@@ -553,3 +553,60 @@
 .tarus-bildirim .seviye-success { color: var(--success); }
 .tarus-bildirim .seviye-warning { color: var(--warning); }
 .tarus-bildirim .seviye-error { color: var(--danger); }
+
+
+/* ── Açık tema: solid zemin üstündeki yazı beyaz (tarus-standartlar §17b istisnası) ──
+   2026-10-03'te Pusula `Frontend/index.css`'ten kabuğa alındı; uygulamalardaki kendi
+   kopyaları (Sistem, Hesap, Arkiv: daha kısa liste) silinir. Açık temalarda
+   `.text-white` metin rengine döner; solid renkli zemin İÇİNDEKİ metin ve ikonlar
+   beyaz kalır. Daraltma: koyu yarı saydam zeminler (`bg-black/60…90`) yalnız
+   `fixed` OLMAYAN elemanda sayılır. Pencere perdesi (`fixed inset-0 bg-black/60`)
+   listede olduğu için içindeki beyaz kartın bütün yazısı beyaza dönüyordu
+   (Pusula Şirket Beyni, 1.7.3). Görüntüleyici başlığı ve avatar katmanı
+   (`absolute`) beyaz yazıyı korur. */
+:is(.theme-modern, .theme-sand, .theme-sage) .text-white { color: var(--text) !important; }
+:is(.theme-modern, .theme-sand, .theme-sage) :is(
+  .bg-blue-600, .bg-blue-700, .bg-blue-800,
+  .bg-red-500, .bg-red-600, .bg-red-700,
+  .bg-emerald-600, .bg-emerald-700,
+  .bg-slate-700, .bg-slate-800, .bg-slate-900,
+  .bg-cyan-600, .bg-cyan-700,
+  .bg-sky-700, .bg-sky-800,
+  .bg-violet-600, .bg-violet-700, .bg-violet-800,
+  .bg-indigo-500, .bg-indigo-600, .bg-indigo-700,
+  .bg-amber-400, .bg-amber-500, .bg-amber-600,
+  .bg-orange-400, .bg-orange-500, .bg-orange-600,
+  .bg-lime-600, .bg-lime-700,
+  .bg-blue-500, .bg-emerald-500, .bg-gray-500, .bg-gray-600, .bg-green-400, .bg-green-500, .bg-green-600, .bg-yellow-500,
+  .bg-purple-500, .bg-purple-600, .bg-rose-500, .bg-rose-600,
+  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .app-icon-bg,
+  .bg-danger, .bg-success, .bg-warning, .bg-brand,
+  .bg-\[var\(--danger\)\], .bg-\[var\(--success\)\], .bg-\[color\:var\(--warning\)\],
+  .bg-black\/60:not(.fixed), .bg-black\/70:not(.fixed), .bg-black\/80:not(.fixed), .bg-black\/90:not(.fixed),
+  .tarus-button-danger.is-solid
+) :is(.text-white, svg, span, p, div, strong, b) {
+  color: #ffffff !important;
+}
+/* Aynı elemanda hem zemin hem text-white (descendant kendi kendine eşleşmez). */
+:is(.theme-modern, .theme-sand, .theme-sage) :is(
+  .bg-blue-600, .bg-blue-700, .bg-blue-800,
+  .bg-red-500, .bg-red-600, .bg-red-700,
+  .bg-emerald-600, .bg-emerald-700,
+  .bg-slate-700, .bg-slate-800, .bg-slate-900,
+  .bg-cyan-600, .bg-cyan-700,
+  .bg-sky-700, .bg-sky-800,
+  .bg-violet-600, .bg-violet-700, .bg-violet-800,
+  .bg-indigo-500, .bg-indigo-600, .bg-indigo-700,
+  .bg-amber-400, .bg-amber-500, .bg-amber-600,
+  .bg-orange-400, .bg-orange-500, .bg-orange-600,
+  .bg-lime-600, .bg-lime-700,
+  .bg-blue-500, .bg-emerald-500, .bg-gray-500, .bg-gray-600, .bg-green-400, .bg-green-500, .bg-green-600, .bg-yellow-500,
+  .bg-purple-500, .bg-purple-600, .bg-rose-500, .bg-rose-600,
+  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .app-icon-bg,
+  .bg-danger, .bg-success, .bg-warning, .bg-brand,
+  .bg-\[var\(--danger\)\], .bg-\[var\(--success\)\], .bg-\[color\:var\(--warning\)\],
+  .bg-black\/60:not(.fixed), .bg-black\/70:not(.fixed), .bg-black\/80:not(.fixed), .bg-black\/90:not(.fixed),
+  .tarus-button-danger.is-solid
+).text-white {
+  color: #ffffff !important;
+}

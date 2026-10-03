@@ -1,9 +1,11 @@
 /* tarus Tasarla — sürüm bilgisi (tek kaynak). Ayrıntılı geçmiş:
  * ozluk/surum-notlari/surum-notlari-tasarla.md. Uygulama içi not en çok 3 cümle. */
 (function (kok) {
-  const APP_VERSION = '1.0.1';
+  const APP_VERSION = '1.0.2';
   const ILK_YAYIN = '2 Ekim 2026';
   const SURUM_NOTLARI = [
+    {surum: '1.0.2', tarih: '3 Ekim 2026',
+      not: 'Açık temalarda renkli düğmelerin ve zeminlerin üzerindeki yazı artık okunaklı beyaz kalıyor. Oturum hata iletileri düzeltildi.'},
     {surum: '1.0.1', tarih: '3 Ekim 2026',
       not: 'Sağ tık menüsündeki Hata bildir / Fikir öner artık açık Pusula oturumunuzla gönderiliyor; önceden oturum anahtarı menüye ulaşmadığı için bildirim kaydedilemeyebiliyordu.'},
     {surum: '1.0.0', tarih: '2 Ekim 2026',

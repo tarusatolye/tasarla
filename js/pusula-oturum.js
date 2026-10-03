@@ -92,10 +92,10 @@
     if (access) opts.headers.Authorization = `Bearer ${access}`;
     let res = await nativeFetch(url, opts);
     if (res.status !== 401) return res;
-    if (!(await yenile())){ yetkilendir(); throw new Error('Oturum süresi doldu, Pusula girişine yönlendiriliyor'); }
+    if (!(await yenile())){ yetkilendir(); throw new Error('Oturum süresi doldu; Pusula girişine yönlendiriliyor'); }
     opts.headers.Authorization = `Bearer ${access}`;
     res = await nativeFetch(url, opts);
-    if (res.status === 401){ yetkilendir(); throw new Error('Oturum yenilendi ama istek yine 401 döndü'); }
+    if (res.status === 401){ yetkilendir(); throw new Error('Oturum yenilendi fakat istek yine 401 döndü'); }
     return res;
   }
 
