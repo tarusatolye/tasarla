@@ -1,8 +1,8 @@
 {
   "name": "tasarla",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
-  "description": "tarus Tasarla - 2B/3B mekân tasarımı (statik, derleme adımı yok)",
+  "description": "tarus Tasarla - giriş gerektirmeyen 2B/3B mekân tasarımı (statik, derleme adımı yok)",
   "license": "MIT",
   "scripts": {
     "test": "node --test \"testler/birim/*.test.cjs\"",

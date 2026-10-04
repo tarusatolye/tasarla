@@ -11,13 +11,16 @@ dağıtımla birlikte korunur.
   Bu commit ve öncesi tek yazara (wuyi) aittir; aynı yazar MIT lisansını
   `fbcb8d5` commit'iyle (1 Ekim 2026) depoya eklemiştir. Lisans doğrulaması:
   2 Ekim 2026 (yol haritası YH7).
-- Tasarla'daki değişiklikler: Türkçeleştirme, tarus tema ve kabuğu, Pusula SSO,
+- Tasarla'daki değişiklikler: Türkçeleştirme, tarus tema ve kabuğu, isteğe bağlı Pusula bağlantısı,
   yerel tefriş kütüphanesi, Pusula teklif/proje aktarımı. Bu değişiklikler de
   MIT koşullarıyla uyumludur; yukarıdaki telif bildirimi ve izin metni korunur.
 
 ## three.js
 
-- Kaynak: https://threejs.org — sürüm r160, çalışma anında jsDelivr CDN'den yüklenir.
+- Kaynak: https://threejs.org — sürüm r160 (0.160.0). Depoda `vendor/three/` altında
+  dağıtılır (CDN yok): `three.module.min.js` ve kullanılan beş eklenti
+  (OrbitControls, PointerLockControls, RoundedBoxGeometry, RoomEnvironment,
+  CSS2DRenderer). Lisans metni: [vendor/three/LICENSE](vendor/three/LICENSE).
 - Lisans: MIT — Copyright © 2010-2024 three.js authors.
 
 ## Lucide ikonları

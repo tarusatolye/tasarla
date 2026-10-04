@@ -1,8 +1,12 @@
 # tarus Tasarla
 
-`tasarla.tarus.tr` — konut planı üzerinde 2B tefriş ve 3B mekân tasarımı.
-tarus ekosisteminin bir parçasıdır: giriş Pusula SSO ile yapılır, plan tek
-adımda Pusula teklif ya da proje kaydına aktarılır.
+[tasarla.tarus.tr](https://tasarla.tarus.tr) — konut planı üzerinde 2B tefriş ve 3B mekân
+tasarımı. **Ücretsiz ve açık kaynak (MIT); giriş gerektirmez.** Plan yalnız tarayıcınızda
+saklanır, sunucuya gönderilmez. PNG ve plan dosyası (JSON) olarak indirilebilir.
+
+tarus çalışanları isteğe bağlı olarak Pusula hesabıyla bağlanıp planı tek adımda Pusula
+teklif ya da proje kaydına aktarabilir; bu bağlantı olmadan uygulamanın bütün tasarım
+özellikleri çalışır.
 
 Motor, açık kaynak [floorplan-3d](https://github.com/wy51ai/floorplan-3d)
 projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UCUNCU-TARAF-LISANSLARI.md).
@@ -28,7 +32,7 @@ projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UC
 - Yerel donatılar: kombi, panel radyatör, havlupan, hela taşı, çekyat, berjer, zigon sehpa
 - Kütüphanede arama
 
-**Plan özeti ve Pusula (YH13)**
+**Plan özeti ve Pusula aktarımı (YH13, yalnız Pusula'ya bağlıyken)**
 - Mahal alanları, net kullanım alanı, döşeme maliyet tahmini (%5 fire, ₺)
 - «Pusula'ya aktar»: önizleme + kullanıcı onayıyla
   - yeni **teklif** (Taslak, sıradaki TKL no, plan özeti notta),
@@ -40,8 +44,8 @@ projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UC
 **Kabuk**
 - tarus-standartlar teması (8 tema, `tarus-theme` çereziyle uygulamalar arası ortak),
   toolbar reçetesi, Lucide ikonları, Inter yazı tipi
-- Pusula SSO (belirteçler yalnız bellekte), kullanıcı menüsü, Hakkında ve sürüm notları
-- Sağ tık menüsü ve hata bildirimi (çizim alanı dışında)
+- Giriş yok; isteğe bağlı Pusula SSO (belirteçler yalnız bellekte), kullanıcı menüsü, Hakkında ve sürüm notları
+- Sağ tık menüsü ve Hata / Fikir Bildir (çizim alanı dışında; misafirken destek@tarus.tr'ye e-posta taslağı)
 - Plan tarayıcıda (`localStorage`) saklanır; PNG / JSON indirme ve JSON yükleme
 
 ## Çalıştırma
@@ -53,15 +57,15 @@ python3 -m http.server 8000
 # http://localhost:8000
 ```
 
-Yerelde (localhost) Pusula'ya otomatik yönlendirme yapılmaz; uygulama "Yerel
-çalışma" modunda açılır, Pusula işlemleri kullanıcı menüsündeki
-«Pusula'ya bağlan» ile başlar. three.js jsDelivr'dan yüklenir; 3B için internet gerekir.
+Uygulama hiçbir ortamda Pusula'ya kendiliğinden yönlendirmez; Pusula işlemleri
+kullanıcı menüsündeki «Pusula ile bağlan» ile başlar. three.js depoda (`vendor/three/`)
+dağıtılır, CDN gerekmez; yalnız Inter yazı tipi Google Fonts'tan yüklenir.
 
 ## Testler
 
 ```bash
 npm test          # birim testleri (node:test): aktarım, kütüphane, Türkçeleştirme, sürüm
-npm run test:e2e  # Playwright ile uçtan uca: Pusula taklit edilerek giriş, teklif, proje, Arkiv yüklemesi
+npm run test:e2e  # Playwright ile uçtan uca: girişsiz açılış, 3B sahne, Pusula taklit edilerek bağlantı, teklif, proje, Arkiv yüklemesi
 ```
 
 ## Yayın
@@ -98,3 +102,9 @@ Coolify'da Dockerfile ile (Caddy, statik). Adımlar: [docs/RUNBOOK-yayin.md](doc
 | `js/tema.js`, `js/ikonlar.js`, `js/surum.js` | Tema çerezi, Lucide ikonları, sürüm ve notlar |
 | `styles/tarus.css`, `styles/tarus-toolbar.css`, `public/tarus-context-menu.js` | ozluk/tarus-kabuk'tan bayt bayt kopya |
 | `styles/tasarla.css` | Uygulama stilleri |
+
+## Lisans ve katkı
+
+MIT lisanslıdır ([LICENSE](LICENSE)); kullanılan açık kaynak çalışmalar
+[UCUNCU-TARAF-LISANSLARI.md](UCUNCU-TARAF-LISANSLARI.md) dosyasındadır. Hata ve öneriler
+için GitHub "Issues" ya da destek@tarus.tr.

@@ -22,8 +22,10 @@ test.before(async () => {
     res.writeHead(200, {'Content-Type': TUR[path.extname(dosya)] || 'application/octet-stream'});
     fs.createReadStream(dosya).pipe(res);
   });
-  await new Promise(r => sunucu.listen(0, '127.0.0.1', r));
-  adres = `http://localhost:${sunucu.address().port}`;
+  // localhost dışı adres (127.0.0.2): canlıdaki gibi davranır. Eskiden localhost'ta
+  // "yerel mod" açıldığı için canlıdaki Pusula yönlendirmesi testte görünmüyordu.
+  await new Promise(r => sunucu.listen(0, '0.0.0.0', r));
+  adres = `http://127.0.0.2:${sunucu.address().port}`;
   tarayici = await chromium.launch();
 });
 test.after(async () => { await tarayici?.close(); sunucu?.close(); });
@@ -56,16 +58,21 @@ async function sayfaAc({sso = false, teklifHata = false} = {}){
     if (yol === '/auth/feedbacks/') return json(201, {});
     return json(404, {detail: 'yok'});
   });
+  // "Pusula ile bağlan": yetkilendirme sayfası taklit edilir (gezinme isteği).
+  await sayfa.route(`${PUSULA}/auth/sso/authorize/**`, r => { istekler.push({yontem: 'GET', yol: '/auth/sso/authorize/', ara: new URL(r.request().url()).search}); return r.fulfill({status: 200, contentType: 'text/html', body: '<title>Pusula</title>'}); });
   await sayfa.goto(`${adres}/index.html${sso ? '?sso_code=tek-kullanimlik' : ''}`);
   await sayfa.waitForSelector('#tarus-loader', {state: 'detached', timeout: 15000});
   return {ctx, sayfa, hatalar, istekler};
 }
 
-test('yerel modda açılır: Türkçe arayüz, tema, kütüphane araması, hatasız', async () => {
-  const {ctx, sayfa, hatalar} = await sayfaAc();
+test('giriş istemeden açılır: misafir, Pusula\'ya istek ve yönlendirme yok, Türkçe arayüz, kütüphane', async () => {
+  const {ctx, sayfa, hatalar, istekler} = await sayfaAc();
+  assert.equal(new URL(sayfa.url()).host, new URL(adres).host, 'Pusula\'ya yönlendirdi');
+  assert.deepEqual(istekler, [], 'misafir açılışta Pusula\'ya istek gitti');
   assert.equal(await sayfa.title(), 'tarus Tasarla');
   assert.equal(await sayfa.getAttribute('html', 'lang'), 'tr');
-  assert.match(await sayfa.textContent('#kAd'), /Yerel çalışma/);
+  assert.equal(await sayfa.textContent('#kAd'), 'Misafir');
+  assert.equal(await sayfa.isVisible('#pusulaAktar'), false, 'misafire Pusula\'ya aktar görünmemeli');
   assert.ok(await sayfa.evaluate(() => document.documentElement.classList.contains('theme-karanlik')));
   const govde = await sayfa.textContent('body');
   assert.ok(!/[一-鿿]/.test(govde), 'sayfada Çince metin var');
@@ -108,14 +115,37 @@ test('Pusula SSO: kod takas edilir, adres temizlenir, kullanıcı kartı dolar',
   await ctx.close();
 });
 
-test('oturum yokken aktarım Pusula girişine yönlendirmeyi önerir, istek atmaz', async () => {
+test('misafir: "Pusula ile bağlan" yalnız istenince Pusula yetkilendirmesine gider', async () => {
   const {ctx, sayfa, istekler} = await sayfaAc();
-  await sayfa.click('#pusulaAktar');
-  await sayfa.waitForSelector('.tarus-dialog');
-  assert.match(await sayfa.textContent('.tarus-dialog'), /Pusula oturumu gerekiyor/);
-  await sayfa.keyboard.press('Escape');
-  assert.equal(await sayfa.$('.tarus-dialog'), null);
+  await sayfa.click('#kullaniciBtn');
+  assert.equal(await sayfa.isVisible('#pusulaAc'), false);
+  await sayfa.click('#girisBtn');
+  await sayfa.waitForURL(u => u.href.startsWith('https://pusula.tarus.tr/auth/sso/authorize/'));
+  const yetki = istekler.find(i => i.yol === '/auth/sso/authorize/');
+  assert.ok(decodeURIComponent(yetki.ara).includes(new URL(adres).host), 'dönüş adresi Tasarla değil');
   assert.equal(istekler.filter(i => i.yontem === 'POST').length, 0);
+  await ctx.close();
+});
+
+test('3B sahne: depodaki three.js ile açılır, dış CDN isteği yok', async () => {
+  const {ctx, sayfa, hatalar} = await sayfaAc();
+  const disIstek = [];
+  sayfa.on('request', q => { if (/cdn\.jsdelivr|unpkg|cdnjs/.test(q.url())) disIstek.push(q.url()); });
+  await sayfa.getByText('3B sahne').click();
+  await sayfa.waitForFunction(() => [...document.querySelectorAll('canvas')].some(c => c.width > 300), null, {timeout: 15000});
+  assert.match(await sayfa.textContent('body'), /Yörünge/);
+  assert.deepEqual(disIstek, []);
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('misafir hata bildirimi Pusula yerine e-posta taslağına yönlenir', async () => {
+  const {ctx, sayfa, istekler} = await sayfaAc();
+  await sayfa.evaluate(() => window.__tarusOpenHataBildir());
+  await sayfa.waitForSelector('#fbNot');
+  assert.match(await sayfa.textContent('#fbNot'), /destek@tarus\.tr/);
+  assert.equal(istekler.length, 0);
+  await sayfa.keyboard.press('Escape');
   await ctx.close();
 });
 
