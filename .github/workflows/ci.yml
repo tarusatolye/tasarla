@@ -5,8 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+# Actions dakikası (2026-10-04): aynı PR'a yeni commit gelince eski çalışma
+# iptal edilir; PR birleştirme commit'i PR'da sınandığı için main'de işler
+# atlanır (doğrudan main push'u yine sınanır).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'Merge pull request') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +30,7 @@ jobs:
         run: npm run test:e2e
 
   docker:
+    if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'Merge pull request') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
