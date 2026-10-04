@@ -1,7 +1,7 @@
 # Runbook — tasarla.tarus.tr yayını
 
 Kod hazır; aşağıdaki adımlar **sende** (Coolify, DNS, Pusula yayını). Sıra önemli:
-Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
+Pusula'daki köken izni olmadan yalnız «Pusula ile bağlan» `400` ile döner; uygulamanın kendisi girişsiz çalışır.
 
 ## 0. Ön koşul — Pusula
 
@@ -20,8 +20,10 @@ Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
 
 ## 1. DNS
 
-- `tasarla.tarus.tr` → Coolify sunucusu (diğer ekosistem uygulamalarıyla aynı kayıt türü;
-  Cloudflare kullanılıyorsa proxy ve "Only Turkey Access" kuralı Pusula'daki gibi).
+- `tasarla.tarus.tr` → Coolify sunucusu (diğer ekosistem uygulamalarıyla aynı kayıt türü).
+- **Cloudflare (2026-10-04):** Tasarla herkese açık ve müşterilerle paylaşılır; "Only Turkey
+  Access" kuralı `tasarla.tarus.tr`'yi **kapsamamalı** (istisna ekle). Pusula ve diğer
+  uygulamalardaki kural aynen kalır; Tasarla misafirken Pusula'ya hiç istek atmaz.
 
 ## 2. Coolify kaynağı
 
@@ -37,22 +39,26 @@ Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
 
 ## 3. Yayın sonrası doğrulama
 
-1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.4","commit":"<sha>",...}`
-2. Pusula'da oturum açıkken `https://tasarla.tarus.tr` aç: Pusula'ya kısa bir yönlendirme,
-   ardından sağ üstte adın ve şirketin görünmeli. Pusula oturumu yoksa giriş sayfasına gider,
-   girişten sonra Tasarla'ya döner.
+1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.7","commit":"<sha>",...}`
+2. Gizli pencerede ve Türkiye dışından (ör. VPN) `https://tasarla.tarus.tr` aç: giriş
+   istenmeden plan açılır, sağ üstte «Misafir», «Pusula'ya aktar» düğmesi görünmez.
+   2B/3B geçişi, kütüphaneden mobilya ekleme, Dosya → PNG/JSON indirme çalışır.
+   Kullanıcı menüsü → «Pusula ile bağlan» (tarus çalışanı): Pusula girişinden sonra
+   Tasarla'ya dönülür, adın ve şirketin görünür, «Pusula'ya aktar» belirir.
 3. «Pusula'ya aktar» → Yeni teklif → müşteri adı → Onayla: Pusula → Teklifler'de
    sıradaki `TKL-YYYY-NNN` numarasıyla «Taslak» teklif, notunda plan özeti.
 4. «Pusula'ya aktar» → Yeni proje → malik → Onayla: Pusula → Projeler'de «Tasarım»
    kategorisinde proje; Arkiv → proje → `07 Belgeler` altında plan görseli (PNG) ve plan
    dosyası (JSON).
 5. Tema: Pusula'da tema değiştir, Tasarla sekmesine dön → aynı tema (ortak `tarus-theme` çerezi).
-6. Sağ tık (çizim alanı dışında) → «Hata bildir» → gönder → sistem.tarus.tr Hata panosunda
-   uygulama adı `tasarla.tarus.tr`.
+6. Sağ tık (çizim alanı dışında) → «Hata / Fikir Bildir»: Pusula'ya bağlıyken sistem.tarus.tr
+   Hata panosuna gider (uygulama adı `tasarla.tarus.tr`); misafirken destek@tarus.tr adresine
+   e-posta taslağı açılır.
 
 Bu adımlar canlı test maddesi olarak `ozluk/acik-isler.md`'de YH7 / YH13 satırlarında izlenir.
 
 ## Geri alma
 
-Coolify'da önceki dağıtımı yeniden başlat. Pusula köken satırı geri alınmak istenirse
-Tasarla'da giriş ve aktarım durur; plan verisi kullanıcıların tarayıcısında kalır.
+Coolify'da önceki dağıtımı yeniden başlat. Pusula köken satırı geri alınırsa yalnız
+Pusula bağlantısı ve aktarım durur; Tasarla misafir olarak çalışmaya devam eder, plan
+verisi kullanıcıların tarayıcısında kalır.

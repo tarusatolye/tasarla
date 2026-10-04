@@ -1,19 +1,18 @@
 /* ============================================================
  *  tarus Tasarla — Pusula SSO oturumu
  *
- *  Tasarla bir Ekosistem uygulamasıdır (ozluk/tarus.md §5.1, karar 2026-10-02):
- *  ayrı kullanıcı sistemi yok, giriş Pusula SSO ile. Akış YH1 ortak paketi
- *  ozluk/tarus-kabuk/services/pusulaOturumu.ts ile aynıdır; o dosya TypeScript
- *  olduğu ve Tasarla'da derleme adımı olmadığı için birebir kopyalanamıyor, bu
- *  dosya onun düz JS karşılığıdır (paket değişirse burası da güncellenir).
- *  Tek bilinçli fark: localhost'ta otomatik yönlendirme yok (aşağıda).
+ *  Tasarla herkese açık bir uygulamadır (kullanıcı kararı 2026-10-04: açık kaynak,
+ *  müşterilerle paylaşılır, giriş istemez). Pusula bağlantısı isteğe bağlıdır ve
+ *  yalnız tarus çalışanlarının planı Pusula'ya aktarması içindir. Akış YH1 ortak
+ *  paketi ozluk/tarus-kabuk/services/pusulaOturumu.ts ile aynıdır; o dosya
+ *  TypeScript olduğu ve Tasarla'da derleme adımı olmadığı için birebir
+ *  kopyalanamıyor, bu dosya onun düz JS karşılığıdır.
+ *  Bilinçli fark: hiçbir durumda kendiliğinden Pusula'ya yönlendirmez.
  *
  *  1. URL'de ?sso_code= varsa /auth/sso/exchange/ ile access + refresh'e çevrilir.
  *  2. Belirteçler YALNIZCA BELLEKTE tutulur (localStorage/çerez yok).
- *  3. Belirteç yoksa pusula.tarus.tr/auth/sso/authorize/?return=<adres>'e gidilir.
- *  4. 401'de bellekteki refresh ile /auth/refresh/ denenir, olmazsa yeniden yetkilendirilir.
- *  Yerel geliştirmede (localhost) otomatik yönlendirme yapılmaz: uygulama
- *  "yerel" modda açılır, Pusula işlemleri "Pusula'ya bağlan" ile başlatılır.
+ *  3. Belirteç yoksa uygulama misafir olarak açılır; Pusula'ya yalnız kullanıcı isterse gidilir.
+ *  4. 401'de bellekteki refresh ile /auth/refresh/ denenir; olmazsa oturum düşer, hata döner.
  * ============================================================ */
 (function (kok) {
   const PUSULA_URL = 'https://pusula.tarus.tr';
@@ -66,7 +65,10 @@
     location.replace(`${PUSULA_URL}/auth/sso/authorize/?return=${encodeURIComponent(location.href)}`);
   }
 
-  /* Açılışta çağrılır. Dönüş: 'oturum' (giriş var) | 'yerel' (localhost, girişsiz) | 'yonlendiriliyor' */
+  /* Açılışta çağrılır. Tasarla herkese açıktır (kullanıcı kararı 2026-10-04): giriş
+   * istenmez, Pusula'ya kendiliğinden yönlendirilmez. Pusula bağlantısı yalnız tarus
+   * çalışanlarının "Pusula ile bağlan" demesiyle (dönüşte ?sso_code) kurulur.
+   * Dönüş: {durum: 'oturum' | 'misafir', hata?} */
   async function baslat(){
     const q = new URLSearchParams(location.search);
     // Eski yetki SSO'su (?token=<jwt>) kullanılmıyor; adres çubuğunda kalmasın
@@ -77,14 +79,12 @@
       q.delete('sso_code');
       const temiz = q.toString();
       history.replaceState({}, document.title, location.pathname + (temiz ? `?${temiz}` : '') + location.hash);
-      if (r.ok) return 'oturum';
-      if (!yerelMi()){ yetkilendir(); return 'yonlendiriliyor'; }
+      if (r.ok) return {durum: 'oturum'};
+      return {durum: 'misafir', hata: r.hata};
     }
-    if (access && !suresiDolmus(access)) return 'oturum';
-    if (refresh && await yenile()) return 'oturum';
-    if (yerelMi()) return 'yerel';
-    yetkilendir();
-    return 'yonlendiriliyor';
+    if (access && !suresiDolmus(access)) return {durum: 'oturum'};
+    if (refresh && await yenile()) return {durum: 'oturum'};
+    return {durum: 'misafir'};
   }
 
   async function authedFetch(url, init = {}){
@@ -92,10 +92,11 @@
     if (access) opts.headers.Authorization = `Bearer ${access}`;
     let res = await nativeFetch(url, opts);
     if (res.status !== 401) return res;
-    if (!(await yenile())){ yetkilendir(); throw new Error('Oturum süresi doldu; Pusula girişine yönlendiriliyor'); }
+    // Kendiliğinden yönlendirme yok: oturum düşerse çağıran tarafa hata döner.
+    if (!(await yenile())){ access = refresh = null; throw new Error("Pusula oturumunuz sona erdi; kullanıcı menüsünden yeniden bağlanın."); }
     opts.headers.Authorization = `Bearer ${access}`;
     res = await nativeFetch(url, opts);
-    if (res.status === 401){ yetkilendir(); throw new Error('Oturum yenilendi fakat istek yine 401 döndü'); }
+    if (res.status === 401){ access = refresh = null; throw new Error("Pusula oturumu doğrulanamadı; kullanıcı menüsünden yeniden bağlanın."); }
     return res;
   }
 

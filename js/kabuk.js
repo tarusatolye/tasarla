@@ -117,11 +117,11 @@
       <div class="kutu">
         <img class="rozet" src="public/icon.svg?v=1" alt="">
         <h3>tarus <span>Tasarla</span></h3>
-        <div class="muted">Konut planını 2B ve 3B tasarlayın, tefrişi yerel ölçülerle yapın, planı tek adımda Pusula teklif ya da proje kaydına aktarın.</div>
+        <div class="muted">Konut planını 2B ve 3B tasarlayın, tefrişi Türkiye'de yaygın ölçülerle yapın. Giriş gerekmez; planınız yalnız bu tarayıcıda saklanır.</div>
         <dl><dt>Uygulama</dt><dd>tarus Tasarla</dd><dt>Sürüm</dt><dd>${esc(S.APP_VERSION)}</dd><dt>İlk yayın</dt><dd>${esc(S.ILK_YAYIN)}</dd></dl>
         <ul><li>2B plan: mobilya yerleşimi, ölçü, duvar yıkma, döşeme seçimi</li><li>3B sahne: yörünge ve gezinti, gün ışığı ve gece</li>
-          <li>Türkiye'de yaygın ölçülerle tefriş kütüphanesi (cm)</li><li>Mahal alanları ve döşeme maliyet tahmini (m², ₺)</li><li>Pusula'ya teklif / proje olarak aktarım</li></ul>
-        <div class="gelistirici"><i>t</i><span>Geliştiren <a href="https://yazilim.tarus.tr" target="_blank" rel="noopener">tarus Yazılım</a><br><small>Açık kaynak <a href="https://github.com/wy51ai/floorplan-3d" target="_blank" rel="noopener">floorplan-3d</a> (MIT) üzerine</small></span></div>
+          <li>Türkiye'de yaygın ölçülerle tefriş kütüphanesi (cm)</li><li>Mahal alanları ve döşeme maliyet tahmini (m², ₺)</li><li>PNG ve plan dosyası (JSON) olarak indirme</li></ul>
+        <div class="gelistirici"><i>t</i><span>Geliştiren <a href="https://yazilim.tarus.tr" target="_blank" rel="noopener">tarus Yazılım</a><br><small>Açık kaynak (MIT): <a href="https://github.com/tarusatolye/tasarla" target="_blank" rel="noopener">kaynak kodu</a> · <a href="https://github.com/wy51ai/floorplan-3d" target="_blank" rel="noopener">floorplan-3d</a> üzerine</small></span></div>
       </div>
       <div class="kutu"><b>Sürüm notları</b>${S.SURUM_NOTLARI.map(n => `<div class="notlar-satir"><div><b>${esc(n.surum)}</b><small>${esc(n.tarih)}</small></div><div>${esc(n.not)}</div></div>`).join('')}</div>
     </div>`});
@@ -136,23 +136,19 @@
       : `<span class="avatar" id="${id}">${k ? esc(basHarf(k.adSoyad)) : ikon('user', boyut)}</span>`;
     $('#kAvatar').outerHTML = rozet('kAvatar', 16);
     $('#kAvatar2').outerHTML = rozet('kAvatar2', 18);
-    $('#kAd').textContent = $('#kAd2').textContent = k ? k.adSoyad : 'Yerel çalışma';
-    $('#kSirket').textContent = k ? (k.sirket || k.email) : 'Pusula oturumu yok';
-    $('#girisBtn').hidden = !!k; $('#cikisBtn').hidden = !k;
+    // Giriş gerekmez (herkese açık); Pusula bağlantısı yalnız tarus çalışanları için.
+    $('#kAd').textContent = $('#kAd2').textContent = k ? k.adSoyad : 'Misafir';
+    $('#kSirket').textContent = k ? (k.sirket || k.email) : 'Giriş gerekmez · plan bu tarayıcıda saklanır';
+    $('#girisBtn').hidden = !!k; $('#cikisBtn').hidden = !k; $('#pusulaAc').hidden = !k;
+    $('#pusulaAktar').hidden = !k;
   }
   function yukleyiciKapat(){ const l = $('#tarus-loader'); if (l){ l.classList.add('gizle'); setTimeout(() => l.remove(), 320); } }
-  function erisimEngeli(metin){
-    const l = $('#tarus-loader'); if (!l) return;
-    l.innerHTML = `<img src="public/icon.svg?v=1" alt="" style="animation:none"><div style="max-width:360px;text-align:center"><b style="color:var(--text);display:block;margin-bottom:6px">Tasarla açılamadı</b>${esc(metin)}</div>
-      <div style="display:flex;gap:8px"><a class="dugme" href="${PusulaOturum.PUSULA_URL}" style="text-decoration:none">${ikon('external')}Pusula'yı aç</a><button class="dugme birincil" onclick="location.reload()">Yeniden dene</button></div>`;
-  }
   async function oturumuBaslat(){
-    const sonuc = await PusulaOturum.baslat();
-    if (sonuc === 'yonlendiriliyor') return;               // yükleyici açık kalır
-    if (sonuc === 'oturum'){
+    const {durum, hata} = await PusulaOturum.baslat();
+    if (hata) toast(hata, 'uyari', 6000);
+    if (durum === 'oturum'){
       const k = await PusulaOturum.kullanici();
-      if (k.hata){ if (PusulaOturum.yerelMi()){ toast(k.hata, 'uyari'); } else { erisimEngeli(k.hata); return; } }
-      else kullanici = k;
+      if (k.hata) toast(k.hata, 'uyari', 6000); else kullanici = k;
     }
     kullaniciKarti();
     const minSure = 600 - (performance.now() - t0);
@@ -163,15 +159,24 @@
   /* ---------- Hata bildirimi (sağ tık → Hata bildir) ----------
    * Pusula çerezleri yalnız pusula.tarus.tr'ye yazılır (host-only); çerezli varsayılan
    * form Tasarla'dan gönderemez. Bildirim bellekteki oturum belirteciyle gönderilir. */
+  const DESTEK_EPOSTA = 'destek@tarus.tr';
   kok.__tarusOpenHataBildir = () => {
     let tur = 'bug';
-    dialog({baslik: 'Hata bildir', govde: `<div class="sekmeler" id="fbTur"><button class="is-active" data-t="bug">${ikon('alert', 14)}Hata</button><button data-t="idea">${ikon('info', 14)}Fikir</button></div>
+    const misafirNotu = PusulaOturum.oturumVar() ? '' : `Bildiriminiz ${DESTEK_EPOSTA} adresine e-posta taslağı olarak hazırlanır.`;
+    dialog({baslik: 'Hata / Fikir Bildir', govde: `<div class="sekmeler" id="fbTur"><button class="is-active" data-t="bug">${ikon('alert', 14)}Hata</button><button data-t="idea">${ikon('info', 14)}Fikir</button></div>
       <div class="form"><label class="full">Başlık<input id="fbBaslik" maxlength="200" autofocus></label><label class="full">Açıklama<textarea id="fbAciklama" rows="5"></textarea></label></div>
-      <div class="not" id="fbNot"></div>`,
+      <div class="not" id="fbNot">${esc(misafirNotu)}</div>`,
       dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: 'Gönder', tur: 'birincil', kapatmaz: true, tikla: async (b, kapat) => {
         const baslik = $('#fbBaslik').value.trim(), aciklama = $('#fbAciklama').value.trim();
         if (!baslik || !aciklama){ $('#fbNot').textContent = 'Başlık ve açıklama zorunludur.'; return; }
-        if (!PusulaOturum.oturumVar()){ $('#fbNot').textContent = 'Bildirim için Pusula oturumu gerekiyor.'; return; }
+        if (!PusulaOturum.oturumVar()){
+          // Misafir: bildirim e-posta taslağı olarak açılır (Pusula hesabı gerekmez).
+          const konu = `[Tasarla ${tur === 'idea' ? 'fikir' : 'hata'}] ${baslik}`;
+          const metin = `${aciklama}\n\nSürüm: ${TasarlaSurum.APP_VERSION}\nTarayıcı: ${navigator.userAgent}`;
+          location.href = `mailto:${DESTEK_EPOSTA}?subject=${encodeURIComponent(konu)}&body=${encodeURIComponent(metin)}`;
+          kapat(true); toast('E-posta uygulamanızda bildirim taslağı açıldı.', 'bilgi');
+          return;
+        }
         b.disabled = true;
         try {
           const res = await PusulaOturum.authedFetch(PusulaOturum.PUSULA_URL + '/auth/feedbacks/', {method: 'POST', headers: {'Content-Type': 'application/json'},

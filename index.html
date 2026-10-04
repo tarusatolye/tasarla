@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#050505">
-<meta name="description" content="tarus Tasarla: 2B plan ve 3B mekân tasarımı, Pusula teklif ve proje kaydına aktarım">
+<meta name="description" content="tarus Tasarla: ücretsiz, giriş gerektirmeyen 2B plan ve 3B mekân tasarımı. Türkiye ölçüleriyle tefriş, mahal alanları ve döşeme maliyeti.">
 <title>tarus Tasarla</title>
 <link rel="icon" href="public/icon.svg?v=1" type="image/svg+xml" sizes="any">
 <link rel="icon" href="public/favicon-32.png?v=1" type="image/png" sizes="32x32">
@@ -23,8 +23,8 @@
 <script src="js/tema.js"></script>
 <script type="importmap">
 {"imports":{
-  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three":"./vendor/three/three.module.min.js",
+  "three/addons/":"./vendor/three/addons/"
 }}
 </script>
 </head>
@@ -37,19 +37,19 @@
       <div class="marka-yazi"><b>tarus <span>Tasarla</span></b><small id="subtitle">Örnek konut planı</small></div>
     </div>
     <div class="spacer"></div>
-    <button class="dugme birincil" id="pusulaAktar" title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
+    <button class="dugme birincil" id="pusulaAktar" hidden title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
     <div class="menu" id="temaMenu">
       <button class="ust-tetik" id="temaBtn" title="Tema" aria-haspopup="true" aria-expanded="false"><i data-ikon="palette" data-boyut="18"></i></button>
       <div class="popup" id="temaPop" style="min-width:300px"><div class="popup-baslik"><b>Tema</b></div><div class="tema-izgara" id="temaIzgara"></div></div>
     </div>
     <div class="menu" id="kullaniciMenu">
-      <button class="ust-tetik" id="kullaniciBtn" aria-haspopup="true" aria-expanded="false" title="Hesap"><span class="avatar" id="kAvatar"><i data-ikon="user" data-boyut="16"></i></span><span class="kullanici-ad" id="kAd">Yerel çalışma</span></button>
+      <button class="ust-tetik" id="kullaniciBtn" aria-haspopup="true" aria-expanded="false" title="Hesap"><span class="avatar" id="kAvatar"><i data-ikon="user" data-boyut="16"></i></span><span class="kullanici-ad" id="kAd">Misafir</span></button>
       <div class="popup" id="kullaniciPop">
-        <div class="popup-baslik"><span class="avatar" id="kAvatar2"><i data-ikon="user" data-boyut="18"></i></span><div><b id="kAd2">Yerel çalışma</b><small id="kSirket">Pusula oturumu yok</small></div></div>
+        <div class="popup-baslik"><span class="avatar" id="kAvatar2"><i data-ikon="user" data-boyut="18"></i></span><div><b id="kAd2">Misafir</b><small id="kSirket">Giriş gerekmez · plan bu tarayıcıda saklanır</small></div></div>
         <button class="popup-oge" id="pusulaAc"><i data-ikon="external"></i>Pusula'yı aç</button>
         <button class="popup-oge" id="hakkindaAc"><i data-ikon="info"></i>Hakkında</button>
         <div class="popup-ayrac"></div>
-        <button class="popup-oge" id="girisBtn" hidden><i data-ikon="log-out"></i>Pusula'ya bağlan</button>
+        <button class="popup-oge" id="girisBtn" hidden title="tarus çalışanları planı Pusula'ya aktarmak için bağlanır"><i data-ikon="external"></i>Pusula ile bağlan</button>
         <button class="popup-oge tehlike" id="cikisBtn" hidden><i data-ikon="log-out"></i>Oturumu kapat</button>
       </div>
     </div>

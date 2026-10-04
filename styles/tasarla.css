@@ -18,6 +18,8 @@
   input,textarea{color:inherit}
 }
 .tarus-toolbar-search-clear[hidden]{display:none}
+/* hidden özniteliği .dugme / .popup-oge gibi display veren sınıfları da gizler (Pusula düğmeleri yalnız bağlıyken). */
+[hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;overscroll-behavior:none;touch-action:manipulation;
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
   font:var(--fs-md)/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-feature-settings:"tnum" 1,"zero" 1}
