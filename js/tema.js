@@ -8,7 +8,7 @@
 (function (kok) {
   const KEY = 'tarus-theme';
   const ONE_YEAR = 60 * 60 * 24 * 365;
-  const VARSAYILAN = 'karanlik';
+  const VARSAYILAN = 'modern'; // çerez yokken (ekosistem kararı 2026-10-04)
 
   const TEMALAR = [
     {id: 'modern',   ad: 'Modern Işık', aciklama: 'Açık slate zemin + beyaz kart.',        ikon: 'sun'},
@@ -66,7 +66,7 @@
     el.classList.add('theme-' + id);
     aktif = id;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = getComputedStyle(el).getPropertyValue('--bg').trim() || '#050505';
+    if (meta) meta.content = getComputedStyle(el).getPropertyValue('--bg').trim() || '#f1f5f9';
     dinleyiciler.forEach(fn => fn(id));
   }
   function sec(id){ writeStoredTheme(id); uygula(id); }

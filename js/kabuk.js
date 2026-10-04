@@ -142,7 +142,8 @@
     $('#girisBtn').hidden = !!k; $('#cikisBtn').hidden = !k; $('#pusulaAc').hidden = !k;
     $('#pusulaAktar').hidden = !k;
   }
-  function yukleyiciKapat(){ const l = $('#tarus-loader'); if (l){ l.classList.add('gizle'); setTimeout(() => l.remove(), 320); } }
+  // Açılış animasyonu (index.html, kabuk şablonu): en az 1 sn kalır, sonra 350 ms'de söner
+  function yukleyiciKapat(){ if (kok.__tarusLoaderHide) kok.__tarusLoaderHide(); else $('#tarus-loader')?.remove(); }
   async function oturumuBaslat(){
     const {durum, hata} = await PusulaOturum.baslat();
     if (hata) toast(hata, 'uyari', 6000);
@@ -151,10 +152,8 @@
       if (k.hata) toast(k.hata, 'uyari', 6000); else kullanici = k;
     }
     kullaniciKarti();
-    const minSure = 600 - (performance.now() - t0);
-    setTimeout(yukleyiciKapat, Math.max(0, minSure));
+    yukleyiciKapat();
   }
-  const t0 = performance.now();
 
   /* ---------- Hata bildirimi (sağ tık → Hata bildir) ----------
    * Pusula çerezleri yalnız pusula.tarus.tr'ye yazılır (host-only); çerezli varsayılan

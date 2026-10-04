@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#050505">
+<meta name="theme-color" content="#f1f5f9">
 <meta name="description" content="tarus Tasarla: ücretsiz, giriş gerektirmeyen 2B plan ve 3B mekân tasarımı. Türkiye ölçüleriyle tefriş, mahal alanları ve döşeme maliyeti.">
 <title>tarus Tasarla</title>
 <link rel="icon" href="public/icon.svg?v=1" type="image/svg+xml" sizes="any">
@@ -29,7 +29,85 @@
 </script>
 </head>
 <body>
-<div id="tarus-loader" role="status" aria-live="polite"><img src="public/icon.svg?v=1" alt=""></div>
+<!-- Açılış animasyonu: ozluk/tarus-kabuk/html/acilis-animasyonu.html (yalnız poligon rengi Tasarla turuncusu) -->
+<style>
+  /* ── TARUS LOADER STANDARDI ── */
+  #tarus-loader {
+    position: fixed; inset: 0; background: var(--bg-color, #050505);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; z-index: 99999; user-select: none; -webkit-user-select: none;
+  }
+  #tarus-loader .tl-wrap { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; }
+  #tarus-loader svg { width: 80px; height: 80px; display: block; transform-origin: center center; animation: _tlPulse 2s ease-in-out 1.0s infinite; }
+  #tarus-loader svg polygon { opacity: 0; transform-box: fill-box; }
+  #tarus-loader .tl-beam     { transform-origin: right center;  animation: _beamSlide 0.45s cubic-bezier(0.22,1,0.36,1) 0.00s forwards; }
+  #tarus-loader .tl-topbar   { transform-origin: center bottom; animation: _barDrop  0.35s cubic-bezier(0.34,1.4,0.64,1) 0.30s forwards; }
+  #tarus-loader .tl-leftcol  { transform-origin: center top;    animation: _barGrow  0.40s cubic-bezier(0.34,1.3,0.64,1) 0.45s forwards; }
+  #tarus-loader .tl-midcol   { transform-origin: center top;    animation: _barGrow  0.40s cubic-bezier(0.34,1.3,0.64,1) 0.55s forwards; }
+  @keyframes _beamSlide { from { opacity: 1; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+  @keyframes _barDrop   { from { opacity: 0; transform: scaleY(0) translateY(-12px); } to { opacity: 1; transform: scaleY(1) translateY(0); } }
+  @keyframes _barGrow   { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: scaleY(1); } }
+  @keyframes _tlPulse   { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.03); opacity: 0.82; } }
+
+  #tarus-loader .tl-text {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary, #b8bcc4); letter-spacing: 0.02em;
+    opacity: 0; animation: _textFadeIn 0.4s ease 0.45s forwards; display: flex; align-items: center; gap: 2px;
+  }
+  @keyframes _textFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 0.75; transform: translateY(0); } }
+  #tarus-loader .tl-dots span { opacity: 0; animation: _dotPulse 1.4s ease-in-out infinite; }
+  #tarus-loader .tl-dots span:nth-child(1) { animation-delay: 0.2s; }
+  #tarus-loader .tl-dots span:nth-child(2) { animation-delay: 0.4s; }
+  #tarus-loader .tl-dots span:nth-child(3) { animation-delay: 0.6s; }
+  @keyframes _dotPulse { 0%, 20% { opacity: 0; } 50% { opacity: 1; } 80%, 100% { opacity: 0; } }
+
+  #tarus-loader.is-slow-network .tl-beam    { animation-duration: 0.75s; }
+  #tarus-loader.is-slow-network .tl-topbar  { animation-duration: 0.60s; animation-delay: 0.50s; }
+  #tarus-loader.is-slow-network .tl-leftcol { animation-duration: 0.70s; animation-delay: 0.75s; }
+  #tarus-loader.is-slow-network .tl-midcol  { animation-duration: 0.70s; animation-delay: 0.90s; }
+  #tarus-loader.is-slow-network svg         { animation-delay: 1.6s; }
+
+  @keyframes _loaderExit { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
+  #tarus-loader.hiding { animation: _loaderExit 0.35s cubic-bezier(0.4,0,1,1) forwards !important; }
+</style>
+
+<div id="tarus-loader">
+  <div class="tl-wrap">
+    <svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+      <polygon class="tl-beam"    fill="#c46a3c" points="26,334 1054,129 1054,849 972,849 972,237 45,417"/>
+      <polygon class="tl-topbar"  fill="#c46a3c" points="292,26 375,26 375,238 292,254"/>
+      <polygon class="tl-leftcol" fill="#c46a3c" points="375,377 375,1053 292,1053 292,393"/>
+      <polygon class="tl-midcol"  fill="#c46a3c" points="715,311 715,849 632,849 632,329"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+  (function(){
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    var isSlow = conn && (conn.saveData || /2g|3g/.test(conn.effectiveType) || (conn.rtt && conn.rtt > 600));
+    var l = document.getElementById('tarus-loader');
+    if (isSlow && l) l.classList.add('is-slow-network');
+
+    var MIN_MS = 1000;
+    var start = Date.now();
+    var hidden = false;
+    function hide(){
+      if (hidden) return;
+      hidden = true;
+      var el = document.getElementById('tarus-loader');
+      if (!el) return;
+      el.classList.add('hiding');
+      setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+    }
+    window.__tarusLoaderHide = function(){
+      var elapsed = Date.now() - start;
+      var wait = Math.max(0, MIN_MS - elapsed);
+      setTimeout(hide, wait);
+    };
+    setTimeout(function(){ hide(); }, 10000);
+  })();
+</script>
 <div class="app">
   <header class="ust kart tarus-surface-card">
     <div class="marka">

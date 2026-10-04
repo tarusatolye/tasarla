@@ -2,9 +2,11 @@
  * ozluk/surum-notlari/surum-notlari-tasarla.md. Uygulama içi not en çok 3 cümle.
  * 2026-10-04: numaralar 0.0.1'den yeniden düzenlendi (1.0.0-1.0.2 -> 0.0.1-0.0.3). */
 (function (kok) {
-  const APP_VERSION = '0.0.7';
+  const APP_VERSION = '0.0.8';
   const ILK_YAYIN = '2 Ekim 2026';
   const SURUM_NOTLARI = [
+    {surum: '0.0.8', tarih: '4 Ekim 2026',
+      not: 'İlk açılışta varsayılan tema artık Modern Işık; daha önce seçtiğiniz tema korunur. Uygulama bilgisi dosyası tarayıcılara doğru türde sunuluyor.'},
     {surum: '0.0.7', tarih: '4 Ekim 2026',
       not: 'Tasarla artık giriş istemiyor: herkes doğrudan kullanabilir, plan yalnız tarayıcıda saklanır. 3B sahne dış bağlantıya ihtiyaç duymadan açılıyor. Pusula bağlantısı tarus çalışanları için kullanıcı menüsünde isteğe bağlı.'},
     {surum: '0.0.6', tarih: '4 Ekim 2026',
