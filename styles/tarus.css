@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.2.0)
+   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.6.2)
 
    Kaynak: Pusula Frontend/index.css (ekosistem standardı, 2026-09-28).
    Düz CSS'tir; Tailwind gerektirmez (Belge gibi statik kabuklar da kullanır).
@@ -376,6 +376,31 @@
   --ring:           inset 0 1px 0 rgba(255,255,255,.85);
 }
 
+/* ── Kategorik renkler (kabuk 0.6.2, tarus-standartlar §9 «Kategorik renkler») ──
+   Anlam taşımayan ayrım renkleri: etiket, kategori rozeti, takvim türü, modül
+   işareti. Durum (başarı/uyarı/hata) için --success/--warning/--danger
+   kullanılır, bunlar değil. Sıra: mor, çivit, menekşe, camgöbeği, pembe,
+   turuncu. Koyu temalarda açık ton (400), açık temalarda koyu ton (600):
+   metin olarak kartın üstünde okunur, %10 zemin / %20 kenarlıkla rozet olur.
+   Tailwind'de `text-kat-1`, `bg-kat-1/10` (tailwind.css @theme). */
+:root,
+.theme-karanlik, .theme-ocean, .theme-forest, .theme-sunset, .theme-violet {
+  --kat-1: #c084fc;
+  --kat-2: #818cf8;
+  --kat-3: #a78bfa;
+  --kat-4: #22d3ee;
+  --kat-5: #f472b6;
+  --kat-6: #fb923c;
+}
+.theme-modern, .theme-sage, .theme-sand {
+  --kat-1: #9333ea;
+  --kat-2: #4f46e5;
+  --kat-3: #7c3aed;
+  --kat-4: #0891b2;
+  --kat-5: #db2777;
+  --kat-6: #ea580c;
+}
+
 /* Üst çubuk ve kenar çubuğu yüzeyi: bdr-2 kenarlık + elev-1 gölge.
    Pusula'da <header> ve <aside> "rounded-tarus tarus-surface-card" kullanır. */
 @layer components {
@@ -622,6 +647,17 @@
   --z-toast: 9999;
   --z-menu: 10000;        /* sağ tık menüsü */
   --z-yakalama: 99999;    /* ekran görüntüsü */
+}
+
+/* ── Kabuk bileşenlerinde Tailwind ölçeği dışında kalan iki yazı boyutu (kabuk 0.6.2) ──
+   Tailwind uygulamalarında yazı boyutu `text-nano` (9), `text-tiny` (10), `text-xs`
+   (12)… ile yazılır (§10 B). Ölçekte karşılığı olmayan iki değer token'dır:
+   toast metni 13 px (§22.2) ve dosya türü ikonundaki uzantı etiketi 7 px.
+   Kullanım: `text-[length:var(--fs-md)]`; `text-[13px]` yazılmaz. Değerler
+   §10 A (`--fs-*`) ölçeğiyle aynıdır. */
+:root {
+  --fs-piko: 7px;
+  --fs-md: 13px;
 }
 
 /* ── Tabular rakam (§10, §10c): tablo ve KPI'da rakamlar alt alta hizalanır. ── */

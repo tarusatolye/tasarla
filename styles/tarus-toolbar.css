@@ -449,6 +449,7 @@
 :is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-segment-button.is-active :is(svg, span, div, p) {
   color: var(--accent) !important;
 }
-:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-button.is-active .tarus-filter-count {
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-button.is-active .tarus-filter-count,
+:is(.theme-modern, .theme-sand, .theme-sage) .tarus-toolbar-segment-button.is-active .tarus-filter-count {
   color: #ffffff !important;
 }
