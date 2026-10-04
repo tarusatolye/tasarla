@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.1.0)
+   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.2.0)
 
    Kaynak: Pusula Frontend/index.css (ekosistem standardı, 2026-09-28).
    Düz CSS'tir; Tailwind gerektirmez (Belge gibi statik kabuklar da kullanır).
@@ -579,7 +579,7 @@
   .bg-lime-600, .bg-lime-700,
   .bg-blue-500, .bg-emerald-500, .bg-gray-500, .bg-gray-600, .bg-green-400, .bg-green-500, .bg-green-600, .bg-yellow-500,
   .bg-purple-500, .bg-purple-600, .bg-rose-500, .bg-rose-600,
-  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .app-icon-bg,
+  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .tarus-marka-kutusu, .app-icon-bg,
   .bg-danger, .bg-success, .bg-warning, .bg-brand,
   .bg-\[var\(--danger\)\], .bg-\[var\(--success\)\], .bg-\[color\:var\(--warning\)\],
   .bg-black\/60:not(.fixed), .bg-black\/70:not(.fixed), .bg-black\/80:not(.fixed), .bg-black\/90:not(.fixed),
@@ -602,7 +602,7 @@
   .bg-lime-600, .bg-lime-700,
   .bg-blue-500, .bg-emerald-500, .bg-gray-500, .bg-gray-600, .bg-green-400, .bg-green-500, .bg-green-600, .bg-yellow-500,
   .bg-purple-500, .bg-purple-600, .bg-rose-500, .bg-rose-600,
-  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .app-icon-bg,
+  .bg-accent, .bg-\[var\(--accent\)\], .tarus-logo-icon, .tarus-marka-kutusu, .app-icon-bg,
   .bg-danger, .bg-success, .bg-warning, .bg-brand,
   .bg-\[var\(--danger\)\], .bg-\[var\(--success\)\], .bg-\[color\:var\(--warning\)\],
   .bg-black\/60:not(.fixed), .bg-black\/70:not(.fixed), .bg-black\/80:not(.fixed), .bg-black\/90:not(.fixed),
@@ -610,3 +610,23 @@
 ).text-white {
   color: #ffffff !important;
 }
+
+/* ── Katman sırası (tarus-standartlar §14d, 2026-10-03) ──
+   z-index yalnız bu token'lardan gelir; `z-[...]` ile keyfi değer yazılmaz. */
+:root {
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-popup: 1000;
+  --z-dialog: 1200;
+  --z-dialog-ust: 1300;   /* Hata bildir, onay */
+  --z-toast: 9999;
+  --z-menu: 10000;        /* sağ tık menüsü */
+  --z-yakalama: 99999;    /* ekran görüntüsü */
+}
+
+/* ── Tabular rakam (§10, §10c): tablo ve KPI'da rakamlar alt alta hizalanır. ── */
+.font-mono, .tarus-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
