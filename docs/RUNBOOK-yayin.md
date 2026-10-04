@@ -37,7 +37,7 @@ Pusula'daki köken izni olmadan Tasarla'da giriş `400` ile döner.
 
 ## 3. Yayın sonrası doğrulama
 
-1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"1.0.0","commit":"<sha>",...}`
+1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.4","commit":"<sha>",...}`
 2. Pusula'da oturum açıkken `https://tasarla.tarus.tr` aç: Pusula'ya kısa bir yönlendirme,
    ardından sağ üstte adın ve şirketin görünmeli. Pusula oturumu yoksa giriş sayfasına gider,
    girişten sonra Tasarla'ya döner.
