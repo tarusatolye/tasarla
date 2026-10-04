@@ -2,7 +2,7 @@
  * Tarus Ekosistemi — Genel Sağ Tık Menüsü ve YouTube-Stili 1-2 Döngüsü
  *
  * Standart (§19g):
- * 1. Sağ tık: Tarus özel pop-up menüsü açılır ("Hata bildir" [kırmızı] + "Sayfayı yenile" [mavi]).
+ * 1. Sağ tık: Tarus özel pop-up menüsü açılır ("Hata / Fikir Bildir" [kırmızı] + "Sayfayı yenile" [mavi]).
  * 2. Sağ tık: Tarus menüsü kapanır, tarayıcının yerel bağlam menüsü (İncele / Inspect vb.) açılır.
  * 3. Sağ tık: Yeniden Tarus özel menüsü açılır (döngüsel devam eder).
  *
@@ -211,7 +211,7 @@
       '    <path d="M22 13h-4"/>',
       '    <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
       '  </svg>',
-      '  <span>Hata bildir</span>',
+      '  <span>Hata / Fikir Bildir</span>',
       '</button>',
       '<div class="tarus-cm-divider"></div>',
       '<button type="button" class="tarus-cm-item tarus-cm-item-default" id="tarus-cm-reload">',
@@ -293,7 +293,7 @@
       '        <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>',
       '      </svg>',
       '      <div>',
-      '        <div class="tarus-fb-title">Hata bildir</div>',
+      '        <div class="tarus-fb-title">Hata / Fikir Bildir</div>',
       '        <div class="tarus-fb-subtitle">' + escapeHtml(moduleName) + '</div>',
       '      </div>',
       '    </div>',
@@ -433,6 +433,12 @@
 
     // 1. Form girdi elemanları veya metin seçimi varsa yerel tarayıcı menüsünü serbest bırak
     var target = e.target;
+    // Kendi sağ tık menüsü olan öğe (ör. TarusTablo satırı: "Üste sabitle") işaretini taşır;
+    // genel menü açılmaz, olay öğenin kendi işleyicisine kalır (2026-10-04, Hesap bulgusu).
+    if (target && target.closest && target.closest('[data-tarus-sag-tik]')) {
+      if (isMenuOpen) closeMenu();
+      return;
+    }
     if (target && target.closest && target.closest('input, textarea, [contenteditable="true"]')) {
       if (isMenuOpen) closeMenu();
       return;
