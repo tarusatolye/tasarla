@@ -31,8 +31,9 @@ test.before(async () => {
 test.after(async () => { await tarayici?.close(); sunucu?.close(); });
 
 /* Pusula taklidi: istekleri kaydeder, yanıtları senaryoya göre verir */
-async function sayfaAc({sso = false, teklifHata = false} = {}){
+async function sayfaAc({sso = false, teklifHata = false, tema = null} = {}){
   const ctx = await tarayici.newContext({viewport: {width: 1440, height: 900}, ignoreHTTPSErrors: true});
+  if (tema) await ctx.addCookies([{name: 'tarus-theme', value: tema, url: adres}]);
   const sayfa = await ctx.newPage();
   const hatalar = [], istekler = [];
   sayfa.on('pageerror', e => hatalar.push(e.message));
@@ -73,7 +74,7 @@ test('giriş istemeden açılır: misafir, Pusula\'ya istek ve yönlendirme yok,
   assert.equal(await sayfa.getAttribute('html', 'lang'), 'tr');
   assert.equal(await sayfa.textContent('#kAd'), 'Misafir');
   assert.equal(await sayfa.isVisible('#pusulaAktar'), false, 'misafire Pusula\'ya aktar görünmemeli');
-  assert.ok(await sayfa.evaluate(() => document.documentElement.classList.contains('theme-karanlik')));
+  assert.ok(await sayfa.evaluate(() => document.documentElement.classList.contains('theme-modern')), 'çerez yokken varsayılan tema Modern olmalı');
   const govde = await sayfa.textContent('body');
   assert.ok(!/[一-鿿]/.test(govde), 'sayfada Çince metin var');
   assert.match(govde, /Mahal alanları/);
@@ -99,6 +100,13 @@ test('tema seçici: seçilen tema <html> sınıfına ve ortak çereze yazılır'
   assert.ok(await sayfa.evaluate(() => document.documentElement.classList.contains('theme-sand')));
   const cerez = (await ctx.cookies()).find(c => c.name === 'tarus-theme');
   assert.equal(cerez?.value, 'sand');
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('ortak tema çerezi varsayılandan önce gelir', async () => {
+  const {ctx, sayfa, hatalar} = await sayfaAc({tema: 'karanlik'});
+  assert.ok(await sayfa.evaluate(() => document.documentElement.classList.contains('theme-karanlik')));
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });

@@ -39,7 +39,7 @@ Pusula'daki köken izni olmadan yalnız «Pusula ile bağlan» `400` ile döner;
 
 ## 3. Yayın sonrası doğrulama
 
-1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.7","commit":"<sha>",...}`
+1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.8","commit":"<sha>",...}`
 2. Gizli pencerede ve Türkiye dışından (ör. VPN) `https://tasarla.tarus.tr` aç: giriş
    istenmeden plan açılır, sağ üstte «Misafir», «Pusula'ya aktar» düğmesi görünmez.
    2B/3B geçişi, kütüphaneden mobilya ekleme, Dosya → PNG/JSON indirme çalışır.
