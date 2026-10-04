@@ -1,0 +1,78 @@
+# tarus sürüm etiketi — TEK KAYNAK: ozluk/tarus-kabuk/github/surum-etiketi.yml
+# Uygulama repolarına .github/workflows/surum-etiketi.yml olarak bayt bayt
+# kopyalanır (kullanıcı kararı 2026-10-04).
+#
+# main'e her push'ta uygulamanın sürümünü okur. O sürümün etiketi yoksa bu
+# commit'e etiket koyar ve GitHub Release açar: "canlıdaki 0.0.16 hangi
+# commit" sorusu GitHub'dan cevaplanır. Etiket SADECE RAKAM, `v` öneki yok
+# (tarus.md §20). Sürüm yükseltilmeden birleşen PR'da etiket zaten vardır,
+# iş bir şey yapmadan biter.
+#
+# Sürüm kaynağı (ilk bulunan): package.json, frontend/package.json,
+# Frontend/package.json, pubspec.yaml (+derleme numarası atılır), Belge
+# config/nginx/custom/tarus-shell.js (TARUS_VERSION), yetki
+# backend/version.py (VERSION).
+name: Sürüm etiketi
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: surum-etiketi
+  cancel-in-progress: false
+
+jobs:
+  etiket:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sürümü oku
+        id: surum
+        run: |
+          set -euo pipefail
+          surum=""
+          for f in package.json frontend/package.json Frontend/package.json; do
+            if [ -z "$surum" ] && [ -f "$f" ]; then
+              surum=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version", ""))' "$f")
+            fi
+          done
+          if [ -z "$surum" ] && [ -f pubspec.yaml ]; then
+            surum=$(sed -nE 's/^version:[[:space:]]*"?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' pubspec.yaml | head -n1)
+          fi
+          if [ -z "$surum" ] && [ -f config/nginx/custom/tarus-shell.js ]; then
+            surum=$(sed -nE "s/.*TARUS_VERSION = '([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/p" config/nginx/custom/tarus-shell.js | head -n1)
+          fi
+          if [ -z "$surum" ] && [ -f backend/version.py ]; then
+            surum=$(sed -nE 's/^VERSION = "([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' backend/version.py | head -n1)
+          fi
+          if ! printf '%s' "$surum" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Sürüm okunamadı ya da X.Y.Z biçiminde değil: '$surum'"
+            exit 1
+          fi
+          echo "surum=$surum" >> "$GITHUB_OUTPUT"
+
+      - name: Etiket ve sürüm notu
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SURUM: ${{ steps.surum.outputs.surum }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$SURUM" >/dev/null 2>&1; then
+            echo "$SURUM etiketi zaten var; yeni sürüm yok."
+            exit 0
+          fi
+          ad="${GITHUB_REPOSITORY#*/}"
+          ad="${ad//-/ }"
+          ad="${ad^}"
+          if git ls-remote --exit-code --tags origin >/dev/null 2>&1; then
+            # Önceki etiketten bu yana birleşen PR'lar sürüm notu olur.
+            gh release create "$SURUM" --target "$GITHUB_SHA" --title "$ad $SURUM" --generate-notes
+          else
+            gh release create "$SURUM" --target "$GITHUB_SHA" --title "$ad $SURUM" \
+              --notes "İlk sürüm etiketi. Önceki sürümler etiketlenmemişti; geçmiş ozluk/surum-notlari'nda."
+          fi
