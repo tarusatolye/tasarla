@@ -456,7 +456,12 @@
   font-size: 16px; line-height: 24px; font-weight: 400;
 }
 @media (max-width: 1023px) {
-  .tarus-bildirim .tarus-bildirim-pencere { position: fixed; top: 88px; left: 12px; right: 12px; width: auto; max-width: none; }
+  /* Üst konum `--tarus-acilir-ust` (varsayılan 88 px, tek satırlı üst çubuk); iki
+     satırlı üst çubukta (`.tarus-ust-cubuk-arama`) tarus-duzen.css 136 px verir. */
+  .tarus-bildirim .tarus-bildirim-pencere {
+    position: fixed; top: var(--tarus-acilir-ust, 88px); left: 12px; right: 12px; width: auto; max-width: none;
+    max-height: calc(100dvh - var(--tarus-acilir-ust, 88px) - 12px);
+  }
 }
 .tarus-bildirim .tarus-bildirim-baslik {
   flex-shrink: 0; min-height: 50px; padding: 16px; display: flex; align-items: center;
