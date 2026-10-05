@@ -127,6 +127,10 @@
   }
 
   kok.__tasarlaGetAccessToken = () => access;   // bağlam menüsü / harici yardımcılar için
+  // Kabuk Hata bildir (feedbackApi.ts) 401'de bunu bir kez çağırır; true dönerse yeni
+  // token'la yineler (kabuk README «Vanilla uygulamada 401 yenileme kancası»).
+  // yenile() tek uçuşlu, Promise<boolean>; yönlendirmez, oturumu silmez.
+  kok.__tasarlaRefreshAccessToken = () => yenile();
   kok.PusulaOturum = {PUSULA_URL, baslat, authedFetch, kullanici, cikis, yetkilendir, oturumVar: () => !!access, yerelMi,
     belirtec: () => access};
 })(window);
