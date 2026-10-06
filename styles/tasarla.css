@@ -361,4 +361,6 @@ footer b{color:var(--text);font-weight:600}
 .galeri-gorsel{position:relative}
 .galeri-rozet{position:absolute;top:8px;left:8px;padding:2px 8px;border-radius:999px;font-size:var(--fs-xs);font-weight:600;background:var(--accent);color:#fff}
 .galeri-rozet.satir{position:static;display:inline-block;vertical-align:middle}
+/* Künye satırı: .ikon blok olduğu için kalp ile sayı ayrı satıra düşüyor, tarihten sonra «·» yalnız kalıyordu */
+.galeri-begeni{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;vertical-align:middle}
 .galeri-ust .tarus-toolbar-segment{flex-wrap:wrap}

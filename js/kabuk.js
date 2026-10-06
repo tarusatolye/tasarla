@@ -121,7 +121,7 @@
         <dl><dt>Uygulama</dt><dd>tarus Tasarla</dd><dt>Sürüm</dt><dd>${esc(S.APP_VERSION)}</dd><dt>İlk yayın</dt><dd>${esc(S.ILK_YAYIN)}</dd></dl>
         <ul><li>2B plan: mobilya yerleşimi, ölçü, duvar yıkma, döşeme seçimi</li><li>3B sahne: yörünge ve gezinti, gün ışığı ve gece</li>
           <li>Türkiye'de yaygın ölçülerle tefriş kütüphanesi (cm)</li><li>Mahal alanları ve döşeme maliyet tahmini (m², ₺)</li><li>PNG ve plan dosyası (JSON) olarak indirme</li></ul>
-        <div class="gelistirici"><i>t</i><span>Geliştiren <a href="https://yazilim.tarus.tr" target="_blank" rel="noopener">tarus Yazılım</a><br><small>Açık kaynak (MIT): <a href="https://github.com/tarusatolye/tasarla" target="_blank" rel="noopener">kaynak kodu</a> · <a href="https://github.com/wy51ai/floorplan-3d" target="_blank" rel="noopener">floorplan-3d</a> üzerine</small></span></div>
+        <div class="gelistirici"><i>t</i><span>Geliştiren <a href="https://tarus.tr" target="_blank" rel="noopener">tarus Yazılım</a><br><small>Açık kaynak (MIT): <a href="https://github.com/tarusatolye/tasarla" target="_blank" rel="noopener">kaynak kodu</a> · <a href="https://github.com/wy51ai/floorplan-3d" target="_blank" rel="noopener">floorplan-3d</a> üzerine</small></span></div>
       </div>
       <div class="kutu"><b>Sürüm notları</b>${S.SURUM_NOTLARI.map(n => `<div class="notlar-satir"><div><b>${esc(n.surum)}</b><small>${esc(n.tarih)}</small></div><div>${esc(n.not)}</div></div>`).join('')}</div>
     </div>`});

@@ -310,7 +310,7 @@
     const sablon = t.sablon && !t.sahibi;
     const tamam = await K().dialog({baslik: t.baslik, govde: `
       ${t.onizleme ? `<img class="galeri-buyuk" src="${esc(t.onizleme)}" alt="">` : ''}
-      <p>${t.sablon ? '<span class="galeri-rozet satir">Şablon</span> ' : ''}<b>${esc(t.yazar_adi || 'Adsız')}</b> · ${tarihYaz(t.olusturma)} · ${kok.ikon('heart', 14)} ${t.begeni_sayisi}</p>
+      <p class="galeri-kunye">${t.sablon ? '<span class="galeri-rozet satir">Şablon</span> ' : ''}<b>${esc(t.yazar_adi || 'Adsız')}</b> · ${tarihYaz(t.olusturma)} · <span class="galeri-begeni" aria-label="${t.begeni_sayisi} beğeni">${kok.ikon('heart', 14)}${t.begeni_sayisi}</span></p>
       ${t.aciklama ? `<p class="galeri-aciklama">${esc(t.aciklama)}</p>` : ''}
       <p class="muted galeri-not">${sablon ? 'Şablon mevcut planınızın yerine açılır ve yeni tasarımınızın başlangıcı olur;' : 'Tasarım mevcut planınızın yerine açılır;'} «Geri al» (Ctrl Z) ile önceki planınıza dönebilirsiniz.${t.sahibi ? '' : ' Değişikliklerinizi «Paylaş» ile kendi tasarımınız olarak kaydedebilirsiniz.'}</p>`,
       dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: sablon ? 'Bu şablonla başla' : 'Planı aç', tur: 'birincil'}]});
