@@ -271,7 +271,7 @@ footer b{color:var(--text);font-weight:600}
 .hakkinda dt{color:var(--muted)} .hakkinda dd{margin:0;font-weight:600}
 .hakkinda ul{margin:10px 0 0;padding-left:18px;color:var(--muted2);font-size:var(--fs-sm)}
 .hakkinda .gelistirici{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid var(--divider);font-size:var(--fs-sm);color:var(--muted)}
-.hakkinda .gelistirici i{width:32px;height:32px;border-radius:9px;background:#5b21b6;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:800}
+.hakkinda .gelistirici svg{width:20px;height:20px;flex-shrink:0;color:var(--text)}
 .hakkinda .gelistirici a{color:var(--text);font-weight:700;text-decoration:none}
 .notlar-satir{display:grid;grid-template-columns:116px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider);font-size:var(--fs-sm)}
 .notlar-satir b{color:var(--brand-tasarla)} .notlar-satir small{display:block;color:var(--muted)}
