@@ -356,3 +356,10 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });
+
+test('galeri: /api/ index.html ile 200 dönse de (API olmayan nginx) düğmeler gizli kalır', async () => {
+  const {ctx, sayfa} = await sayfaAc({api: r => r.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title>tarus Tasarla</title>'})});
+  await sayfa.waitForTimeout(500);
+  assert.equal(await sayfa.isVisible('#paylasBtn'), false);
+  await ctx.close();
+});

@@ -280,7 +280,8 @@
     const a = acikTasarim();
     if (a) P().baslik(a.baslik);
     let hazir = false;
-    try { hazir = (await fetch(API + '/saglik/', {credentials: 'omit'})).ok; } catch(e) {}
+    // Yalnız 200 yetmez: API'siz bir nginx /api/ yolunu index.html ile de yanıtlayabilir
+    try { hazir = (await (await fetch(API + '/saglik/', {credentials: 'omit'})).json()).ok === true; } catch(e) {}
     if (!hazir) return;                          // API yayında değil: paylaşım özellikleri gizli kalır
     $('#galeriBtn').hidden = $('#paylasBtn').hidden = false;
     $('#galeriBtn').onclick = galeriAc;
