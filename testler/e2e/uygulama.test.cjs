@@ -227,3 +227,38 @@ test('mevcut projeye ekle: proje seçilir, yalnız Arkiv yüklemesi yapılır', 
   assert.equal(istekler.filter(i => i.yol === '/arkiv/projects/p-mevcut/documents/').length, 2);
   await ctx.close();
 });
+
+test('plan: mobilya seçilir, sürüklenir, Delete ile silinir; duvar yıkılır; tekerlek basılıyken plan kayar', async () => {
+  const {ctx, sayfa, hatalar} = await sayfaAc();
+  const merkez = async sec => { const k = await sayfa.locator(sec).first().boundingBox(); return [k.x + k.width/2, k.y + k.height/2]; };
+  const mobilyaSayisi = () => sayfa.locator('[data-fid]').count();
+
+  // Mobilya seç ve sürükle (2026-10-06: kaldırılmış menüye erişim her tıklamada hata atıyordu, hiçbir şey seçilemiyordu)
+  const id = await sayfa.evaluate(() => [...document.querySelectorAll('[data-fid]')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0].dataset.fid);
+  const [x, y] = await merkez(`[data-fid="${id}"]`);
+  await sayfa.mouse.move(x, y); await sayfa.mouse.down();
+  await sayfa.mouse.move(x + 40, y + 30, {steps: 8}); await sayfa.mouse.up();
+  assert.match(await sayfa.textContent('#panel'), /Mobilya/, 'tıklanan mobilya seçilmedi');
+  const [x2, y2] = await merkez(`[data-fid="${id}"]`);
+  assert.ok(Math.hypot(x2 - x, y2 - y) > 10, 'mobilya sürüklenince yer değiştirmedi');
+
+  const once = await mobilyaSayisi();
+  await sayfa.keyboard.press('Delete');
+  assert.equal(await mobilyaSayisi(), once - 1, 'Delete seçili mobilyayı silmedi');
+
+  // Taşıyıcı olmayan iç duvar yıkılır
+  await sayfa.click('[data-tool="demolish"]');
+  const duvar = await sayfa.evaluate(() => [...document.querySelectorAll('rect[data-wall]')].find(w => w.getAttribute('fill') === '#a7a195' && Math.max(w.getBoundingClientRect().width, w.getBoundingClientRect().height) > 60).dataset.wall);
+  await sayfa.mouse.click(...await merkez(`[data-wall="${duvar}"]`));
+  assert.equal(await sayfa.getAttribute(`[data-wall="${duvar}"]`, 'stroke-dasharray'), '5 3', 'duvar yıkılacak olarak işaretlenmedi');
+
+  // Orta tuşla kaydırma seçili araçtan bağımsız çalışır
+  const svgSec = 'svg:has([data-wall])', vb = await sayfa.getAttribute(svgSec, 'viewBox');
+  const [sx, sy] = await merkez(svgSec);
+  await sayfa.mouse.move(sx, sy); await sayfa.mouse.down({button: 'middle'});
+  await sayfa.mouse.move(sx + 120, sy + 60, {steps: 8}); await sayfa.mouse.up({button: 'middle'});
+  assert.notEqual(await sayfa.getAttribute(svgSec, 'viewBox'), vb, 'tekerlek basılıyken plan kaymadı');
+
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});

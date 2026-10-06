@@ -1037,15 +1037,21 @@ function endDrag(cancel){
     renderMeasure(); return;                   // sürüklenmedi: başlangıç noktası tutulur, ikinci tıklama beklenir
   }
   if (d.kind === 'pan'){
-    if (!cancel && !d.moved && ui.tool === 'select') select(d.room ? {kind:'room', id:d.room} : null);
+    if (!cancel && !d.moved && !d.orta && ui.tool === 'select') select(d.room ? {kind:'room', id:d.room} : null);
     return;
   }
   if (d.moved){ commit(d.before); renderAll(); }
 }
 
 svg.addEventListener('pointerdown', e => {
-  if (e.button === 1 || e.button === 2) return;
-  closeDrawers(); $('details.menu').open = false;
+  if (e.button === 2) return;
+  if (e.button === 1){                           // tekerlek basılı: hangi araç seçili olursa olsun planı kaydır
+    if (drag) return;
+    e.preventDefault();
+    drag = {kind:'pan', sx:e.clientX, sy:e.clientY, x0:view.x0, y0:view.y0, orta:true, moved:false};
+    svg.setPointerCapture(e.pointerId); return;
+  }
+  closeDrawers();                                // açık Dosya/tema menüleri kabuğun belge düzeyindeki dinleyicisiyle kapanır
   if (e.pointerType !== 'mouse'){
     touches.set(e.pointerId, {x:e.clientX, y:e.clientY});
     svg.setPointerCapture(e.pointerId);
@@ -1132,6 +1138,7 @@ function onPointerEnd(e){
 }
 svg.addEventListener('pointerup', onPointerEnd);
 svg.addEventListener('pointercancel', onPointerEnd);
+svg.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });   // tarayıcının orta tuş otomatik kaydırması açılmasın
 // iPad Safari iki parmak hareketini sayfa yakınlaştırması saymasın
 ['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
 
