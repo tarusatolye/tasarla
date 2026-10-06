@@ -265,6 +265,14 @@ test('plan: mobilya seçilir, sürüklenir, Delete ile silinir; duvar yıkılır
   await ctx.close();
 });
 
+/* Hızlı Bakış (galeri sayfası) açılışta açık gelir; düğme aç/kapa yapar. Taze liste ve güncel
+   yönetici durumu için açıksa kapatıp yeniden açar. */
+async function hizliBakisAc(sayfa){
+  if (await sayfa.isVisible('#hizliBakis')) await sayfa.click('#galeriBtn');
+  await sayfa.click('#galeriBtn');
+  await sayfa.waitForSelector('#hizliBakis:not([hidden])');
+}
+
 /* Tasarla API taklidi (api/galeri): istekleri kaydeder. Yönetici: Authorization ile gelen her istek. */
 function apiTaklidi(){
   const istekler = [], tasarimlar = {};
@@ -309,6 +317,7 @@ test('galeri: API yokken Paylaş ve Galeri görünmez', async () => {
   await sayfa.waitForTimeout(500);
   assert.equal(await sayfa.isVisible('#paylasBtn'), false);
   assert.equal(await sayfa.isVisible('#galeriBtn'), false);
+  assert.equal(await sayfa.isVisible('#hizliBakis'), false, 'API yokken Hızlı Bakış açılmamalı');
   assert.deepEqual(hatalar.filter(h => !/404/.test(h)), []);
   await ctx.close();
 });
@@ -347,10 +356,34 @@ test('galeri: paylaş → kayıt (herkese açık, şablon seçeneği), anahtar t
   await sayfa.click('.tarus-dialog-footer .birincil');
 
   // Kendi tasarımı da olsa kullanıcı silemez: kartta Sil yok, Pusula belirteci gönderilmez
-  await sayfa.click('#galeriBtn');
+  await hizliBakisAc(sayfa);
   await sayfa.waitForSelector('.galeri-kart[data-kod="yeni42"]');
   assert.equal(await sayfa.locator('.galeri-kart [data-sil]').count(), 0);
   assert.ok(api.istekler.every(i => !i.yetki), 'misafir istekte Authorization olmamalı');
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('hızlı bakış: açılış ekranı galeri sayfası; Çizime dön ve düğmeyle geçiş; ?t= bağlantısı doğrudan çizime', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  await sayfa.waitForSelector('#hizliBakis:not([hidden]) .galeri-kart[data-kod="hazir1"]');
+  assert.equal(await sayfa.locator('.tarus-dialog').count(), 0, 'galeri pencere değil sayfa olmalı');
+  assert.equal((await sayfa.textContent('#hizliBakis h1')).trim(), 'Hızlı Bakış');
+  assert.equal((await sayfa.textContent('#galeriBtn')).trim(), 'Çizime dön');
+  assert.equal(await sayfa.isVisible('main#stage'), false, 'çizim alanı Hızlı Bakış altında görünmemeli');
+  await sayfa.click('#hbCizim');
+  assert.equal(await sayfa.isVisible('#hizliBakis'), false);
+  assert.equal(await sayfa.isVisible('main#stage'), true);
+  assert.equal((await sayfa.textContent('#galeriBtn')).trim(), 'Hızlı Bakış');
+  await sayfa.click('#galeriBtn');
+  await sayfa.waitForSelector('#hizliBakis:not([hidden])');
+  await sayfa.click('#galeriBtn');
+  assert.equal(await sayfa.isVisible('#hizliBakis'), false, 'düğme ikinci basışta çizime dönmeli');
+  const ikinci = await sayfaAc({api: api.isleyici, adres: '/index.html?t=hazir1'});
+  await ikinci.sayfa.waitForSelector('.tarus-dialog h2:text("Ferah salon")');
+  assert.equal(await ikinci.sayfa.isVisible('#hizliBakis'), false, 'bağlantıyla açılışta Hızlı Bakış açılmamalı');
+  await ikinci.ctx.close();
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });
@@ -359,7 +392,7 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
   const api = apiTaklidi();
   const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
   const onceki = await sayfa.locator('[data-fid]').count();
-  await sayfa.click('#galeriBtn');
+  await hizliBakisAc(sayfa);
   await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"]');
   await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-begen]');
   await sayfa.waitForFunction(() => document.querySelector('.galeri-kart[data-kod="hazir1"] [data-begen] span').textContent === '5');
@@ -367,6 +400,7 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
   await sayfa.click('.tarus-dialog-footer .birincil');            // Planı aç
   await sayfa.waitForFunction(() => document.querySelectorAll('[data-fid]').length === 1);
   assert.match(await sayfa.textContent('#subtitle'), /^Ferah salon/);
+  assert.equal(await sayfa.isVisible('#hizliBakis'), false, 'tasarım açılınca Hızlı Bakış kapanmalı');
   await sayfa.keyboard.press('Control+z');
   assert.equal(await sayfa.locator('[data-fid]').count(), onceki, 'Geri al önceki plana dönmedi');
 
@@ -382,7 +416,7 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
 test('galeri: şablonlar sekmesi; şablonla başlanan plan paylaşılınca yeni tasarım (kaynak = şablon)', async () => {
   const api = apiTaklidi();
   const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
-  await sayfa.click('#galeriBtn');
+  await hizliBakisAc(sayfa);
   await sayfa.click('[data-tur="sablon"]');
   await sayfa.waitForFunction(() => [...document.querySelectorAll('.galeri-kart')].map(k => k.dataset.kod).join() === 'sablon1');
   assert.equal((await sayfa.textContent('.galeri-kart [data-ac].birincil')).trim(), 'Kullan');
@@ -409,7 +443,7 @@ test('galeri: yönetici (Pusula bağlı) Sil ve Gizle görür, istekler Pusula b
   const api = apiTaklidi();
   const {ctx, sayfa, hatalar} = await sayfaAc({sso: true, api: api.isleyici});
   await sayfa.waitForFunction(() => document.querySelector('#kAd').textContent === 'Emre Yıldırım');
-  await sayfa.click('#galeriBtn');
+  await hizliBakisAc(sayfa);
   await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"] [data-sil]');
   assert.equal(await sayfa.locator('[data-tur="inceleme"]').count(), 1, 'yöneticiye İnceleme sekmesi');
   await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-sil]');

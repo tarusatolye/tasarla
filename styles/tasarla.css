@@ -333,6 +333,15 @@ footer b{color:var(--text);font-weight:600}
 .bal-kupu{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .galeri-baglanti{display:flex;gap:8px;margin:6px 0 4px}
 .galeri-baglanti input{flex:1;min-width:0;height:36px;border:1px solid var(--bdr-2);border-radius:8px;padding:0 10px;background:var(--input-bg);color:var(--text)}
+/* Hızlı Bakış: galeri sayfası (açılış ekranı). Araç çubuğu + çalışma satırını kaplar; çizim DOM'da kalır */
+.hizli-bakis{grid-column:1/-1;grid-row:2/4;min-height:0;overflow:auto;padding:20px 22px;z-index:2}
+.hizli-bakis[hidden]{display:none}
+.app.hb-acik>.arac,.app.hb-acik>aside,.app.hb-acik>main{visibility:hidden}
+.hb-baslik{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.hb-baslik h1{font-size:var(--fs-xl,20px);font-weight:800;margin:0 0 4px}
+.hb-baslik p{margin:0;font-size:var(--fs-sm)}
+#galeriBtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+@media (max-width:640px){.hizli-bakis{padding:14px}}
 .galeri-ust{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .galeri-izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 .galeri-kart{border:1px solid var(--bdr-2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}

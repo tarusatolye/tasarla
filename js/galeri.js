@@ -195,9 +195,35 @@
     try { return (await istek('/yonetici/', {yetkili: true})).yonetici === true; } catch(e) { return false; }
   }
 
+  /* ---------- Hızlı Bakış sayfası ----------
+     Galeri pencere değil sayfa (kullanıcı, 2026-10-06): uygulama bununla açılır, üst çubuktaki
+     «Hızlı Bakış» / «Çizime dön» düğmesi iki görünüm arasında geçer. Çizim alanı DOM'da kalır,
+     `.app.hb-acik` yalnız görünmez yapar (tuval boyutu ve plan durumu korunur). */
+  const sayfaEl = () => $('#hizliBakis');
+  const sayfaAcikMi = () => !!sayfaEl() && !sayfaEl().hidden;
+  function dugmeEtiketi(){
+    const b = $('#galeriBtn'); if (!b) return;
+    const acik = sayfaAcikMi();
+    b.querySelector('.aktar-yazi').textContent = acik ? 'Çizime dön' : 'Hızlı Bakış';
+    b.setAttribute('aria-label', acik ? 'Çizime dön' : 'Hızlı Bakış');
+    b.title = acik ? 'Plan çizimine dön' : 'Herkesin paylaştığı tasarımlar ve şablonlar';
+    b.setAttribute('aria-pressed', String(acik));
+  }
+  function sayfaKapat(){
+    if (!sayfaEl()) return;
+    sayfaEl().hidden = true;
+    document.querySelector('.app')?.classList.remove('hb-acik');
+    dugmeEtiketi();
+    window.dispatchEvent(new Event('resize'));   // tuval görünür olunca ölçüsünü tazelesin
+  }
+  disa.sayfaKapat = sayfaKapat;
+
   async function galeriAc(){
+    const el = sayfaEl();
+    if (!el) return;
+    if (sayfaAcikMi()) return sayfaKapat();
     yonetici = await yoneticiMi();
-    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = null;
+    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = el;
     const yukle = async (sifirla) => {
       const liste = kutuEl.querySelector('#galeriListe'), daha = kutuEl.querySelector('#galeriDaha');
       if (sifirla){ sonraki = 1; liste.innerHTML = `<div class="galeri-bos">${kok.ikon('loader')} Yükleniyor…</div>`; }
@@ -213,36 +239,42 @@
     };
     const segment = (ad, secenekler, secili) => `<div class="tarus-toolbar-segment" role="tablist" data-grup="${ad}">${secenekler.map(([d, e]) =>
       `<button class="tarus-toolbar-segment-button btn${d === secili ? ' is-active' : ''}" data-${ad}="${d}" role="tab" aria-selected="${d === secili}">${e}</button>`).join('')}</div>`;
-    await K().dialog({baslik: 'Galeri', genislik: 'genis', govde: `
+    const kutu = el;
+    kutu.innerHTML = `
+      <div class="hb-baslik">
+        <div><h1>Hızlı Bakış</h1><p class="muted">Herkesin paylaştığı tasarımlar ve şablonlar. Birini açın ya da çiziminize devam edin.</p></div>
+        <button class="dugme birincil" id="hbCizim">${kok.ikon('ruler')}<span>Çizime dön</span></button>
+      </div>
       <div class="galeri-ust">
         ${segment('tur', [['tumu', 'Tüm tasarımlar'], ['sablon', 'Şablonlar'], ...(yonetici ? [['inceleme', 'İnceleme']] : [])], tur)}
         ${segment('sira', [['yeni', 'En yeni'], ['begeni', 'En beğenilen']], sira)}
       </div>
       <div class="galeri-izgara" id="galeriListe"></div>
-      <div class="galeri-alt"><button class="dugme" id="galeriDaha" hidden>Daha fazla göster</button></div>`,
-      acilis: (kutu, kapat) => {
-        kutuEl = kutu;
-        ['tur', 'sira'].forEach(ad => kutu.querySelectorAll(`[data-${ad}]`).forEach(b => b.onclick = () => {
-          if (ad === 'tur') tur = b.dataset.tur; else sira = b.dataset.sira;
-          kutu.querySelectorAll(`[data-${ad}]`).forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });
-          yukle(true);
-        }));
-        kutu.querySelector('#galeriDaha').onclick = () => yukle(false);
-        kutu.querySelector('#galeriListe').addEventListener('click', async e => {
-          const kartEl = e.target.closest('.galeri-kart'); if (!kartEl) return;
-          const kod = kartEl.dataset.kod;
-          if (e.target.closest('[data-ac]')){ kapat(null); return tasarimAc(kod); }
-          if (e.target.closest('[data-begen]')){
-            const b = e.target.closest('[data-begen]');
-            try { const v = await istek(`/tasarimlar/${kod}/begen/`, {yontem: 'POST'}); b.querySelector('span').textContent = v.begeni_sayisi; b.classList.add('is-active'); }
-            catch(err){ K().toast(err.message, 'hata'); }
-          }
-          if (e.target.closest('[data-sikayet]')) sikayetEt(kod);
-          if (e.target.closest('[data-gizle]') && await yoneticiIslem(kod, 'gizle')) kartEl.remove();
-          if (e.target.closest('[data-sil]') && await yoneticiIslem(kod, 'sil')) kartEl.remove();
-        });
-        yukle(true);
-      }});
+      <div class="galeri-alt"><button class="dugme" id="galeriDaha" hidden>Daha fazla göster</button></div>`;
+    kutu.hidden = false;
+    document.querySelector('.app')?.classList.add('hb-acik');
+    dugmeEtiketi();
+    kutu.querySelector('#hbCizim').onclick = sayfaKapat;
+    ['tur', 'sira'].forEach(ad => kutu.querySelectorAll(`[data-${ad}]`).forEach(b => b.onclick = () => {
+      if (ad === 'tur') tur = b.dataset.tur; else sira = b.dataset.sira;
+      kutu.querySelectorAll(`[data-${ad}]`).forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });
+      yukle(true);
+    }));
+    kutu.querySelector('#galeriDaha').onclick = () => yukle(false);
+    kutu.querySelector('#galeriListe').addEventListener('click', async e => {
+      const kartEl = e.target.closest('.galeri-kart'); if (!kartEl) return;
+      const kod = kartEl.dataset.kod;
+      if (e.target.closest('[data-ac]')){ if (await tasarimAc(kod)) sayfaKapat(); return; }
+      if (e.target.closest('[data-begen]')){
+        const b = e.target.closest('[data-begen]');
+        try { const v = await istek(`/tasarimlar/${kod}/begen/`, {yontem: 'POST'}); b.querySelector('span').textContent = v.begeni_sayisi; b.classList.add('is-active'); }
+        catch(err){ K().toast(err.message, 'hata'); }
+      }
+      if (e.target.closest('[data-sikayet]')) sikayetEt(kod);
+      if (e.target.closest('[data-gizle]') && await yoneticiIslem(kod, 'gizle')) kartEl.remove();
+      if (e.target.closest('[data-sil]') && await yoneticiIslem(kod, 'sil')) kartEl.remove();
+    });
+    yukle(true);
   }
 
   async function sikayetEt(kod){
@@ -274,7 +306,7 @@
   async function tasarimAc(kod){
     let t;
     try { t = await istek(`/tasarimlar/${encodeURIComponent(kod)}/`, {anahtar: kayitlarim()[kod]?.anahtar}); }
-    catch(e){ return K().toast(e.message, 'hata'); }
+    catch(e){ K().toast(e.message, 'hata'); return false; }
     const sablon = t.sablon && !t.sahibi;
     const tamam = await K().dialog({baslik: t.baslik, govde: `
       ${t.onizleme ? `<img class="galeri-buyuk" src="${esc(t.onizleme)}" alt="">` : ''}
@@ -282,13 +314,14 @@
       ${t.aciklama ? `<p class="galeri-aciklama">${esc(t.aciklama)}</p>` : ''}
       <p class="muted galeri-not">${sablon ? 'Şablon mevcut planınızın yerine açılır ve yeni tasarımınızın başlangıcı olur;' : 'Tasarım mevcut planınızın yerine açılır;'} «Geri al» (Ctrl Z) ile önceki planınıza dönebilirsiniz.${t.sahibi ? '' : ' Değişikliklerinizi «Paylaş» ile kendi tasarımınız olarak kaydedebilirsiniz.'}</p>`,
       dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: sablon ? 'Bu şablonla başla' : 'Planı aç', tur: 'birincil'}]});
-    if (!tamam) return;
+    if (!tamam) return false;
     const p = P();
     p.yukle(planTemizle(t.plan, {MATS: p.MATS, WALLS: p.WALLS, varsayilanMalzeme: id => p.ROOMS.find(r => r.id === id)?.mat || Object.keys(p.MATS)[0]}));
     // Şablondan başlanınca başlık boş: Paylaş yeni tasarım olarak kaydeder (kaynak = şablon)
     yaz(ACIK, sablon ? {kod: t.kod, baslik: '', kaynakBaslik: t.baslik}
                      : {kod: t.kod, baslik: t.baslik, yazar_adi: t.yazar_adi, aciklama: t.aciklama, sablon: t.sablon});
     p.baslik(sablon ? `«${t.baslik}» şablonundan` : t.baslik);
+    return true;
   }
 
   // Plan sıfırlanınca / dosyadan yüklenince açık tasarım bağı kalkar (Paylaş yeni kayıt açar)
@@ -308,6 +341,8 @@
     if (kod){
       history.replaceState(null, '', location.pathname);   // yenilemede yeniden sorulmasın
       tasarimAc(kod);
+    } else {
+      galeriAc();                                          // açılış ekranı Hızlı Bakış
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', basla); else basla();

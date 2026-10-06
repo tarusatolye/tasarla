@@ -115,7 +115,7 @@
       <div class="marka-yazi"><b>tarus <span>Tasarla</span></b><small id="subtitle">Örnek konut planı</small></div>
     </div>
     <div class="spacer"></div>
-    <button class="dugme" id="galeriBtn" hidden aria-label="Galeri" title="Herkesin paylaştığı tasarımlar"><i data-ikon="layout-grid"></i><span class="aktar-yazi">Galeri</span></button>
+    <button class="dugme" id="galeriBtn" hidden aria-label="Hızlı Bakış" title="Herkesin paylaştığı tasarımlar ve şablonlar"><i data-ikon="layout-grid"></i><span class="aktar-yazi">Hızlı Bakış</span></button>
     <button class="dugme" id="paylasBtn" hidden aria-label="Paylaş" title="Tasarımı kaydet ve bağlantıyla paylaş"><i data-ikon="share"></i><span class="aktar-yazi">Paylaş</span></button>
     <button class="dugme birincil" id="pusulaAktar" hidden title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
     <div class="menu" id="temaMenu">
@@ -134,6 +134,10 @@
       </div>
     </div>
   </header>
+
+  <!-- Hızlı Bakış: galeri sayfası (açılış ekranı). Çizim alanının üstünü kaplar; çizim DOM'da
+       kalır (plan ve tuval bozulmaz), yalnız görünmez olur. İçeriği js/galeri.js çizer. -->
+  <section id="hizliBakis" class="hizli-bakis kart tarus-surface-card" hidden aria-label="Hızlı Bakış"></section>
 
   <div class="tarus-toolbar arac kart">
     <div class="tarus-toolbar-segment" id="paneBtns">
@@ -1158,6 +1162,7 @@ svg.addEventListener('contextmenu', e => { if (ui.tool==='measure'){ e.preventDe
 document.addEventListener('keydown', e => {
   if (e.target.matches('input,select,textarea')) return;
   if (document.querySelector('.tarus-dialog-overlay')) return;   // açık pencere varken kısayollar çalışmaz
+  if (document.querySelector('.app.hb-acik')) return;           // Hızlı Bakış açıkken görünmeyen plan düzenlenmesin
   if (window.View3D?.walking()) return;
   const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
   if (mod && k === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }

@@ -2,9 +2,11 @@
  * ozluk/surum-notlari/surum-notlari-tasarla.md. Uygulama içi not en çok 3 cümle.
  * 2026-10-04: numaralar 0.0.1'den yeniden düzenlendi (1.0.0-1.0.2 -> 0.0.1-0.0.3). */
 (function (kok) {
-  const APP_VERSION = '0.1.0';
+  const APP_VERSION = '0.1.1';
   const ILK_YAYIN = '2 Ekim 2026';
   const SURUM_NOTLARI = [
+    {surum: '0.1.1', tarih: '6 Ekim 2026',
+      not: 'Galeri artık ayrı bir pencere değil, Hızlı Bakış sayfası; Tasarla bu sayfayla açılıyor. Bir tasarım ya da şablon açınca çizime geçilir, üst çubuktaki «Çizime dön» / «Hızlı Bakış» düğmesiyle iki görünüm arasında gidip gelebilirsiniz.'},
     {surum: '0.1.0', tarih: '6 Ekim 2026',
       not: 'Tasarımınızı hesap açmadan kaydedip bağlantıyla paylaşabilir, isterseniz şablon olarak ekleyebilirsiniz; bütün tasarımlar Galeri\'de herkese açıktır. Galeri\'de tasarımları açıp beğenebilir, bir şablonla yeni tasarıma başlayabilirsiniz. Tasarımınızı kaydettiğiniz tarayıcıdan güncelleyebilirsiniz; kaldırma yalnız yöneticidedir.'},
     {surum: '0.0.10', tarih: '5 Ekim 2026',
