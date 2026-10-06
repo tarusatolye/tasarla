@@ -31,7 +31,7 @@ test.before(async () => {
 test.after(async () => { await tarayici?.close(); sunucu?.close(); });
 
 /* Pusula taklidi: istekleri kaydeder, yanıtları senaryoya göre verir */
-async function sayfaAc({sso = false, teklifHata = false, tema = null} = {}){
+async function sayfaAc({sso = false, teklifHata = false, tema = null, api = null, adres: yol = '/index.html'} = {}){
   const ctx = await tarayici.newContext({viewport: {width: 1440, height: 900}, ignoreHTTPSErrors: true});
   if (tema) await ctx.addCookies([{name: 'tarus-theme', value: tema, url: adres}]);
   const sayfa = await ctx.newPage();
@@ -61,7 +61,9 @@ async function sayfaAc({sso = false, teklifHata = false, tema = null} = {}){
   });
   // "Pusula ile bağlan": yetkilendirme sayfası taklit edilir (gezinme isteği).
   await sayfa.route(`${PUSULA}/auth/sso/authorize/**`, r => { istekler.push({yontem: 'GET', yol: '/auth/sso/authorize/', ara: new URL(r.request().url()).search}); return r.fulfill({status: 200, contentType: 'text/html', body: '<title>Pusula</title>'}); });
-  await sayfa.goto(`${adres}/index.html${sso ? '?sso_code=tek-kullanimlik' : ''}`);
+  // Tasarla API'si (api/): verilmezse statik sunucu /api/ için 404 döner (yalnız Dockerfile yayını gibi)
+  if (api) await sayfa.route(`${adres}/api/**`, api);
+  await sayfa.goto(`${adres}${yol}${sso ? '?sso_code=tek-kullanimlik' : ''}`);
   await sayfa.waitForSelector('#tarus-loader', {state: 'detached', timeout: 15000});
   return {ctx, sayfa, hatalar, istekler};
 }
@@ -259,6 +261,98 @@ test('plan: mobilya seçilir, sürüklenir, Delete ile silinir; duvar yıkılır
   await sayfa.mouse.move(sx + 120, sy + 60, {steps: 8}); await sayfa.mouse.up({button: 'middle'});
   assert.notEqual(await sayfa.getAttribute(svgSec, 'viewBox'), vb, 'tekerlek basılıyken plan kaymadı');
 
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+/* Tasarla API taklidi (api/galeri): istekleri kaydeder */
+function apiTaklidi(){
+  const istekler = [], tasarimlar = {};
+  const PLAN = {furniture: [{id: 'g1', type: 'bed', name: 'Galeri yatağı', cx: 8300, cy: 1000, w: 1800, d: 2000, rot: 0, color: '#c9d6df'}],
+                rooms: {}, demolished: [], measures: []};
+  tasarimlar.hazir1 = {kod: 'hazir1', baslik: 'Ferah salon', yazar_adi: 'Ayşe', aciklama: 'Açık mutfak', onizleme: '', begeni_sayisi: 4,
+                       kopya_sayisi: 0, goruntulenme: 0, galeride: true, olusturma: '2026-10-06T10:00:00+03:00', guncelleme: '2026-10-06T10:00:00+03:00', plan: PLAN};
+  const isleyici = async route => {
+    const req = route.request(), u = new URL(req.url()), yol = u.pathname, yontem = req.method();
+    const govde = req.postData() ? JSON.parse(req.postData()) : null;
+    istekler.push({yontem, yol, ara: u.search, govde, anahtar: req.headers()['x-tasarla-anahtar'] || ''});
+    const json = (status, body) => route.fulfill({status, contentType: 'application/json', body: JSON.stringify(body)});
+    if (yol === '/api/saglik/') return json(200, {ok: true});
+    if (yol === '/api/galeri/') return json(200, {sonuclar: Object.values(tasarimlar).filter(t => t.galeride).map(({plan, ...t}) => t), sonraki: null, toplam: 1});
+    if (yol === '/api/tasarimlar/' && yontem === 'POST'){
+      const t = {...govde, kod: 'yeni42', begeni_sayisi: 0, kopya_sayisi: 0, goruntulenme: 0, onizleme: '/api/medya/onizleme/yeni42.webp', olusturma: '2026-10-06T11:00:00+03:00', guncelleme: '2026-10-06T11:00:00+03:00'};
+      tasarimlar.yeni42 = t;
+      return json(201, {...t, anahtar: 'gizli-anahtar'});
+    }
+    const m = yol.match(/^\/api\/tasarimlar\/([^/]+)\/(begen\/)?$/);
+    if (m && m[2]) return json(200, {begeni_sayisi: ++tasarimlar[m[1]].begeni_sayisi});
+    if (m && yontem === 'GET') return tasarimlar[m[1]] ? json(200, {...tasarimlar[m[1]], kaynak: '', sahibi: false}) : json(404, {detail: 'yok'});
+    if (m && yontem === 'PUT') return json(200, {...tasarimlar[m[1]], ...govde});
+    return json(404, {detail: 'yok'});
+  };
+  return {isleyici, istekler};
+}
+
+test('galeri: API yokken Paylaş ve Galeri görünmez', async () => {
+  const {ctx, sayfa, hatalar} = await sayfaAc();
+  await sayfa.waitForTimeout(500);
+  assert.equal(await sayfa.isVisible('#paylasBtn'), false);
+  assert.equal(await sayfa.isVisible('#galeriBtn'), false);
+  assert.deepEqual(hatalar.filter(h => !/404/.test(h)), []);
+  await ctx.close();
+});
+
+test('galeri: paylaş → kayıt, anahtar tarayıcıda; ikinci paylaşım aynı tasarımı günceller', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  await sayfa.click('#paylasBtn');
+  await sayfa.fill('#gBaslik', 'Benim salonum');
+  await sayfa.fill('#gYazar', 'Mehmet');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.waitForSelector('#gAdres');
+  assert.match(await sayfa.inputValue('#gAdres'), /\/\?t=yeni42$/);
+  const kayit = api.istekler.find(i => i.yontem === 'POST' && i.yol === '/api/tasarimlar/');
+  assert.equal(kayit.govde.baslik, 'Benim salonum');
+  assert.equal(kayit.govde.yazar_adi, 'Mehmet');
+  assert.equal(kayit.govde.galeride, true);
+  assert.ok(kayit.govde.plan.furniture.length > 10, 'plan gitmedi');
+  assert.match(kayit.govde.onizleme, /^data:image\/(webp|png);base64,/);
+  const saklanan = await sayfa.evaluate(() => JSON.parse(localStorage.getItem('tasarla-tasarimlarim')));
+  assert.equal(saklanan.yeni42.anahtar, 'gizli-anahtar');
+  assert.match(await sayfa.textContent('#subtitle'), /^Benim salonum/);
+  await sayfa.click('.tarus-dialog-footer .birincil');            // Tamam
+
+  await sayfa.click('#paylasBtn');
+  assert.equal((await sayfa.textContent('.tarus-dialog-footer .birincil')).trim(), 'Güncelle');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.waitForSelector('#gAdres');
+  const guncelle = api.istekler.find(i => i.yontem === 'PUT');
+  assert.equal(guncelle.yol, '/api/tasarimlar/yeni42/');
+  assert.equal(guncelle.anahtar, 'gizli-anahtar');
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Geri al önceki plana döner', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  const onceki = await sayfa.locator('[data-fid]').count();
+  await sayfa.click('#galeriBtn');
+  await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"]');
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-begen]');
+  await sayfa.waitForFunction(() => document.querySelector('.galeri-kart [data-begen] span').textContent === '5');
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] .galeri-eylem [data-ac]');
+  await sayfa.click('.tarus-dialog-footer .birincil');            // Planı aç
+  await sayfa.waitForFunction(() => document.querySelectorAll('[data-fid]').length === 1);
+  assert.match(await sayfa.textContent('#subtitle'), /^Ferah salon/);
+  await sayfa.keyboard.press('Control+z');
+  assert.equal(await sayfa.locator('[data-fid]').count(), onceki, 'Geri al önceki plana dönmedi');
+
+  // ?t= bağlantısıyla açılış; adres temizlenir
+  const ikinci = await sayfaAc({api: api.isleyici, adres: '/index.html?t=hazir1'});
+  await ikinci.sayfa.waitForSelector('.tarus-dialog h2:text("Ferah salon")');
+  assert.ok(!ikinci.sayfa.url().includes('t=hazir1'), 'adreste kod kaldı');
+  await ikinci.ctx.close();
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });

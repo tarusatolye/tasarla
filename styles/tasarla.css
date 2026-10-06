@@ -322,3 +322,30 @@ footer b{color:var(--text);font-weight:600}
   .arac .spacer{display:none}
   #dosyaPop{position:fixed;right:12px;top:auto}
 }
+
+/* ---------- Galeri ve paylaşım (js/galeri.js) ---------- */
+.dugme.kucuk{height:30px;padding:0 9px;font-size:var(--fs-xs)}
+.dugme.kucuk.is-active{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,transparent)}
+.galeri-form label.onay{flex-direction:row;align-items:center;gap:8px;color:var(--text);font-weight:500}
+.galeri-form label.onay input{width:auto;height:auto;margin:0}
+.galeri-form small,.galeri-not{font-weight:400;color:var(--muted)}
+.galeri-not{font-size:var(--fs-xs);margin-top:12px}
+.bal-kupu{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.galeri-baglanti{display:flex;gap:8px;margin:6px 0 4px}
+.galeri-baglanti input{flex:1;min-width:0;height:36px;border:1px solid var(--bdr-2);border-radius:8px;padding:0 10px;background:var(--input-bg);color:var(--text)}
+.galeri-ust{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.galeri-izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.galeri-kart{border:1px solid var(--bdr-2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}
+.galeri-gorsel{all:unset;cursor:pointer;aspect-ratio:4/3;background:#f7f4ee;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.galeri-gorsel img{width:100%;height:100%;object-fit:cover}
+.galeri-gorsel:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.galeri-bilgi{padding:10px 12px 4px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.galeri-bilgi b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.galeri-bilgi small{color:var(--muted);font-size:var(--fs-xs)}
+.galeri-eylem{display:flex;gap:6px;padding:8px 12px 12px;margin-top:auto}
+.galeri-eylem [data-ac]{margin-left:auto}
+.galeri-bos{grid-column:1/-1;padding:32px 0;text-align:center;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px}
+.galeri-alt{display:flex;justify-content:center;margin-top:14px}
+.galeri-alt [hidden]{display:none}
+.galeri-buyuk{width:100%;border-radius:10px;border:1px solid var(--bdr-2);margin-bottom:12px;background:#f7f4ee}
+.galeri-aciklama{white-space:pre-wrap}

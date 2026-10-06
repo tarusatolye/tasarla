@@ -37,6 +37,45 @@ Pusula'daki köken izni olmadan yalnız «Pusula ile bağlan» `400` ile döner;
 | Kalıcı disk | yok (plan kullanıcının tarayıcısında, aktarılan kayıtlar Pusula'da) |
 | Sağlık kontrolü | `GET /version.json` → 200 |
 
+## 2b. Tasarım kaydetme ve galeri — Docker Compose'a geçiş (0.1.0)
+
+Galeri ve Paylaş için `api/` servisi (Django) ve veritabanı gerekir. Yalnız Dockerfile
+yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü için bu düğmeler gizli kalır.
+
+1. **PostgreSQL** (önerilen): Coolify → yeni kaynak → PostgreSQL 16, ad `tasarla-postgres`,
+   veritabanı `tasarla`. Sunucunun `coolify` ağında olmalı. Bağlantı adresini kopyala
+   (iç ad + port 5432). Boş bırakılırsa SQLite `veri` biriminde tutulur.
+2. **Uygulama kaynağı**: mevcut Tasarla kaynağında Build Pack → **Docker Compose**, dosya
+   `docker-compose.yml`. Alan adı `https://tasarla.tarus.tr` yalnız **web** servisine,
+   iç port 80. `api` servisine alan adı verilmez.
+3. **Ortam değişkenleri** (Coolify → Environment Variables):
+
+   | Değişken | Değer |
+   | --- | --- |
+   | `DJANGO_SECRET_KEY` | uzun rastgele metin (`python -c "import secrets;print(secrets.token_urlsafe(50))"`), parola yöneticisine yedek. Değişirse IP özetleri değişir (beğeni sayıları korunur) |
+   | `DATABASE_URL` | `postgres://<kullanıcı>:<parola>@<iç ad>:5432/tasarla` |
+   | `TASARLA_MODERASYON_TOKEN` | ayrı rastgele metin; boşsa moderasyon ucu kapalı |
+   | `DJANGO_ALLOWED_HOSTS` | (varsayılan `tasarla.tarus.tr`) |
+
+4. **Kalıcı birimler**: `medya` (önizleme görselleri, web salt okunur bağlar) ve `veri`
+   (SQLite kullanılıyorsa). Coolify'ın yedeğine eklenmeli; PostgreSQL'in yedeği kendi kaynağında.
+5. Yayından sonra doğrulama:
+   ```bash
+   curl -s https://tasarla.tarus.tr/api/saglik/          # {"ok": true}
+   curl -s https://tasarla.tarus.tr/api/galeri/          # {"sonuclar": [], ...}
+   ```
+   Tarayıcıda: üst çubukta **Galeri** ve **Paylaş** görünür → Paylaş → başlık → Kaydet:
+   bağlantı `https://tasarla.tarus.tr/?t=<kod>`; gizli pencerede bağlantı tasarımı açar;
+   Galeri'de kart, önizleme görseli, beğeni; kendi kartında sil.
+6. **Moderasyon** (uygunsuz tasarımı gizleme):
+   ```bash
+   curl -X POST https://tasarla.tarus.tr/api/moderasyon/<kod>/ \
+     -H "Authorization: Bearer $TASARLA_MODERASYON_TOKEN" -H 'Content-Type: application/json' \
+     -d '{"gizli": true}'
+   ```
+   3 farklı ziyaretçiden şikâyet alan tasarım kendiliğinden galeriden düşer (bağlantısı açık kalır).
+   Cloudflare "Only Turkey Access" istisnası `/api/` yollarını da kapsamalı (Tasarla zaten istisnada).
+
 ## 3. Yayın sonrası doğrulama
 
 1. `https://tasarla.tarus.tr/version.json` → `{"app":"tasarla","version":"0.0.8","commit":"<sha>",...}`

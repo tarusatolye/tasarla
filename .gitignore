@@ -24,3 +24,10 @@ tmp/
 # Ortam değişkenleri
 .env
 .env.*
+
+# API (Django)
+api/.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+api/medya/

@@ -1,0 +1,47 @@
+# Coolify: "Docker Compose" kaynağı (docs/RUNBOOK-yayin.md → 2b). Alan adı (tasarla.tarus.tr)
+# yalnız `web`e verilir; `api` dışarı açılmaz, web ona "api" adıyla ulaşır.
+services:
+  web:
+    build:
+      context: .
+      args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-yerel}
+    restart: unless-stopped
+    depends_on:
+      - api
+    volumes:
+      - medya:/srv/medya:ro
+    expose:
+      - "80"
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-tasarla.tarus.tr}
+      # Boş bırakılırsa SQLite (veri birimi); PostgreSQL için postgres://…
+      DATABASE_URL: ${DATABASE_URL:-}
+      TASARLA_MODERASYON_TOKEN: ${TASARLA_MODERASYON_TOKEN:-}
+      TASARLA_SIKAYET_ESIGI: ${TASARLA_SIKAYET_ESIGI:-3}
+      TASARLA_KAYIT_SINIRI: ${TASARLA_KAYIT_SINIRI:-30/hour}
+    volumes:
+      - medya:/app/medya
+      - veri:/app/veri
+    # Coolify'daki ayrı PostgreSQL kaynağı sunucunun "coolify" ağında; api ona bu ağdan ulaşır.
+    networks:
+      - default
+      - coolify
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/api/saglik/', headers={'Host': 'tasarla.tarus.tr'}))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  medya:
+  veri:
+
+networks:
+  coolify:
+    external: true

@@ -115,6 +115,8 @@
       <div class="marka-yazi"><b>tarus <span>Tasarla</span></b><small id="subtitle">Örnek konut planı</small></div>
     </div>
     <div class="spacer"></div>
+    <button class="dugme" id="galeriBtn" hidden aria-label="Galeri" title="Herkesin paylaştığı tasarımlar"><i data-ikon="layout-grid"></i><span class="aktar-yazi">Galeri</span></button>
+    <button class="dugme" id="paylasBtn" hidden aria-label="Paylaş" title="Tasarımı kaydet ve bağlantıyla paylaş"><i data-ikon="share"></i><span class="aktar-yazi">Paylaş</span></button>
     <button class="dugme birincil" id="pusulaAktar" hidden title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
     <div class="menu" id="temaMenu">
       <button class="ust-tetik" id="temaBtn" title="Tema" aria-haspopup="true" aria-expanded="false"><i data-ikon="palette" data-boyut="18"></i></button>
@@ -425,6 +427,7 @@ const svg = $('#plan');
 
 /* ======================= Durum / geçmiş / kayıt ======================= */
 let state = load() || defaultState();
+let tasarimAdi = '';                           // galeriden açılan / kaydedilen tasarımın adı (üst başlıkta)
 const ui = {tool:'select', sel:null, mA:null, mCur:null,
   layers:{dims:true, labels:true, furn:true, grid:false, bearing:false, wallSnap:true}};
 let view = {x0:0, y0:0, s:.06};
@@ -734,7 +737,7 @@ function renderAll(){
 
 function updateHeader(){
   const tot = ROOMS.filter(r => r.counted !== false).reduce((a,r) => a + area(r.poly), 0);
-  $('#subtitle').textContent = `Örnek konut planı · net ${fmtTR(tot)} m² · ölçüler cm`;
+  $('#subtitle').textContent = `${tasarimAdi || 'Örnek konut planı'} · net ${fmtTR(tot)} m² · ölçüler cm`;
   $('#undo').disabled = !undoStack.length; $('#redo').disabled = !redoStack.length;
 }
 
@@ -1281,7 +1284,10 @@ function exportPNG(){
 }
 const planAdi = () => `Konut planı ${fmtTR(ROOMS.filter(r => r.counted !== false).reduce((a,r) => a + area(r.poly), 0))} m²`;
 // Pusula'ya aktarım (js/kabuk.js) planı buradan okur
-window.TasarlaPlan = {state:() => state, ROOMS, MATS, WALLS, area, planAdi, pngBlob:planPngBlob};
+// Galeri (js/galeri.js) paylaşılan tasarımı yukle() ile açar: «Geri al» önceki plana döndürür
+window.TasarlaPlan = {state:() => state, ROOMS, MATS, WALLS, area, planAdi, pngBlob:planPngBlob,
+  yukle: s => { const b = snap(); state = fixState(s); ui.sel = null; commit(b); renderAll(); fitView(); },
+  baslik: metin => { tasarimAdi = metin || ''; renderAll(); }};
 
 /* ======================= Çeşitli ======================= */
 // Bildirimler ve onay pencereleri tarus kabuğundan (js/kabuk.js): sağ üstte toast, onay için tarusDialog
@@ -1352,14 +1358,16 @@ $('#importJson').onclick = () => $('#fileIn').click();
 $('#fileIn').onchange = e => {
   const file = e.target.files[0]; if (!file) return;
   file.text().then(txt => {
-    try { const s = JSON.parse(txt); if (!Array.isArray(s.furniture)) throw 0; const b = snap(); state = fixState(s); ui.sel = null; commit(b); renderAll(); toast('Plan içe aktarıldı', 'basari'); }
+    try { const s = JSON.parse(txt); if (!Array.isArray(s.furniture)) throw 0; const b = snap(); state = fixState(s); ui.sel = null; commit(b); window.TasarlaGaleri?.ayir(); renderAll(); toast('Plan içe aktarıldı', 'basari'); }
     catch(err){ toast('Dosya biçimi geçersiz', 'hata'); }
   });
   e.target.value = '';
 };
 $('#reset').onclick = async () => {
   if (!await TarusKabuk.onayla({baslik:'Örnek plana dön', metin:'Plan örnek konut planına döner. «Geri al» ile geri alabilirsiniz.', onay:'Örnek plana dön', tehlike:true})) return;
-  const b = snap(); state = defaultState(); ui.sel = null; commit(b); renderAll();
+  const b = snap(); state = defaultState(); ui.sel = null; commit(b);
+  window.TasarlaGaleri?.ayir();                 // örnek plan artık paylaşılan tasarıma bağlı değil
+  renderAll();
 };
 // Yatay/dikey dönüş, başlığın satır atlaması vb. çizim alanının boyutunu değiştirir; boyut 0'dan dönüyorsa (ilk yerleşim gibi) pencereye yeniden sığdırılır
 // Diğer boyut değişimlerinde (panel aç/kapa vb.) görünümün merkezi sabit kalır
@@ -1378,6 +1386,7 @@ $('#libAraTemizle').onclick = () => { libFilter = ''; $('#libAra').value = ''; $
 $('#tip').textContent = TIPS()['2d'];
 fitView(); renderAll();
 </script>
+<script src="js/galeri.js"></script>
 <script type="module">
 /* ============================================================
  *  3B sahne (three.js) — 2B ile aynı state / ui'yi kullanır, geçişler animasyonludur:
