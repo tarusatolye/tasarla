@@ -9,4 +9,7 @@ RUN useradd -u 1000 -m uygulama && mkdir -p /app/medya /app/veri && chown -R uyg
 ENV SQLITE_YOLU=/app/veri/tasarla.sqlite3 MEDIA_ROOT=/app/medya
 USER uygulama
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn tasarla_api.wsgi -b 0.0.0.0:8000 -w ${GUNICORN_WORKERS:-2} --access-logfile -"]
+# Tek süreç + iş parçacıkları: önbellek (hız sınırları, Pusula yönetici sorgusu) süreç içi
+# LocMemCache; birden çok süreçte her biri ayrı sayıyordu (sınırlar fiilen katlanıyordu).
+# REDIS_URL verilirse önbellek Redis'e geçer ve süreç sayısı güvenle artırılabilir.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn tasarla_api.wsgi -b 0.0.0.0:8000 -w ${GUNICORN_WORKERS:-1} --threads ${GUNICORN_THREADS:-4} --access-logfile -"]
