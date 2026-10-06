@@ -46,7 +46,7 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    veritabanı `tasarla`. Sunucunun `coolify` ağında olmalı. Bağlantı adresini kopyala
    (iç ad + port 5432). Boş bırakılırsa SQLite `veri` biriminde tutulur.
 2. **Uygulama kaynağı**: mevcut Tasarla kaynağında Build Pack → **Docker Compose**, dosya
-   `docker-compose.yml`. Alan adı `https://tasarla.tarus.tr` yalnız **web** servisine,
+   `docker-compose.yaml`. Alan adı `https://tasarla.tarus.tr` yalnız **web** servisine,
    iç port 80. `tasarla-api` servisine alan adı verilmez (ad bilerek Tasarla'ya özgü: Coolify ortak ağında `api` adı yonetim'e çözülür).
 3. **Ortam değişkenleri** (Coolify → Environment Variables):
 

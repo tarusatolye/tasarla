@@ -5,7 +5,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN useradd -u 1000 -m uygulama && mkdir -p /app/medya /app/veri && chown -R uygulama /app/medya /app/veri
-# DATABASE_URL verilmezse SQLite bu kalıcı birimde tutulur (docker-compose.yml → veri).
+# DATABASE_URL verilmezse SQLite bu kalıcı birimde tutulur (docker-compose.yaml → veri).
 ENV SQLITE_YOLU=/app/veri/tasarla.sqlite3 MEDIA_ROOT=/app/medya
 USER uygulama
 EXPOSE 8000
