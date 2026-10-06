@@ -32,7 +32,7 @@ Pusula'daki köken izni olmadan yalnız «Pusula ile bağlan» `400` ile döner;
 | Kaynak | GitHub `tarusatolye/tasarla`, dal `main` |
 | Build Pack | Dockerfile (kökteki `Dockerfile`) |
 | Ports Exposes | 80 (Dockerfile'daki nginx 80'i dinler) |
-| Alan adı | `https://tasarla.tarus.tr` — **https** olmalı: Pusula SSO dönüş adresi yalnız https kabul eder |
+| Alan adı | `http://tasarla.tarus.tr` — Coolify'da **http** (diğer uygulamalar gibi): TLS Cloudflare'de biter, tünel içeriye http taşır; `https://` yazılırsa Coolify http→https yönlendirir ve sonsuz 302 döngüsü olur (2026-10-06). Ziyaretçi yine https görür, Pusula SSO dönüşü etkilenmez |
 | Ortam değişkeni | yok (statik uygulama; `SOURCE_COMMIT` Coolify tarafından derlemeye verilir) |
 | Kalıcı disk | yok (plan kullanıcının tarayıcısında, aktarılan kayıtlar Pusula'da) |
 | Sağlık kontrolü | `GET /version.json` → 200 |
@@ -46,7 +46,7 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    veritabanı `tasarla`. Sunucunun `coolify` ağında olmalı. Bağlantı adresini kopyala
    (iç ad + port 5432). Boş bırakılırsa SQLite `veri` biriminde tutulur.
 2. **Uygulama kaynağı**: mevcut Tasarla kaynağında Build Pack → **Docker Compose**, dosya
-   `docker-compose.yaml`. Alan adı `https://tasarla.tarus.tr` yalnız **web** servisine,
+   `docker-compose.yaml`. Alan adı `http://tasarla.tarus.tr` (https değil, tablo §2) yalnız **web** servisine,
    iç port 80. `tasarla-api` servisine alan adı verilmez (ad bilerek Tasarla'ya özgü: Coolify ortak ağında `api` adı yonetim'e çözülür).
 3. **Ortam değişkenleri** (Coolify → Environment Variables):
 
