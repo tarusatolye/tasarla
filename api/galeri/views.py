@@ -1,9 +1,10 @@
 """Tasarım kaydetme, paylaşma ve galeri uçları (hesapsız).
 
-Yazma yetkisi: kayıtta bir kez verilen düzenleme anahtarı, `X-Tasarla-Anahtar`
-başlığıyla gelir. Galeri yalnız `galeride=True` ve gizlenmemiş tasarımları listeler.
+Kullanıcı kararları (2026-10-06): bütün tasarımlar herkese açık; tasarım şablon
+olarak eklenebilir; silme ve gizleme yalnız yöneticide (galeri/yonetici.py).
+Sahibi, kayıtta bir kez verilen düzenleme anahtarıyla (`X-Tasarla-Anahtar`)
+tasarımını günceller; silemez.
 """
-import hmac
 import secrets
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from rest_framework.views import APIView
 
 from .dogrulama import onizleme_coz, plan_dogrula
 from .models import Begeni, Sikayet, Tasarim, anahtar_ozeti, ip_ozeti
+from .yonetici import yonetici_mi
 
 SAYFA_BOYU = 24
 
@@ -48,7 +50,7 @@ def _onizleme_adresi(t):
 def _ozet(t):
     return {"kod": t.kod, "baslik": t.baslik, "yazar_adi": t.yazar_adi, "aciklama": t.aciklama,
             "onizleme": _onizleme_adresi(t), "begeni_sayisi": t.begeni_sayisi, "kopya_sayisi": t.kopya_sayisi,
-            "goruntulenme": t.goruntulenme, "galeride": t.galeride,
+            "goruntulenme": t.goruntulenme, "sablon": t.sablon,
             "olusturma": t.olusturma.isoformat(), "guncelleme": t.guncelleme.isoformat()}
 
 
@@ -70,7 +72,7 @@ class TasarimGiris(serializers.Serializer):
     yazar_adi = serializers.CharField(max_length=60, required=False, allow_blank=True, default="")
     plan = serializers.JSONField()
     onizleme = serializers.CharField(required=False, allow_blank=True, default="")
-    galeride = serializers.BooleanField(required=False, default=True)
+    sablon = serializers.BooleanField(required=False, default=False)
     kaynak = serializers.CharField(max_length=16, required=False, allow_blank=True, default="")
     # Bal küpü: insanlar görmez, botlar doldurur
     web_sitesi = serializers.CharField(required=False, allow_blank=True, default="")
@@ -105,7 +107,7 @@ class TasarimOlustur(APIView):
         anahtar = secrets.token_urlsafe(24)
         with transaction.atomic():
             t = Tasarim.objects.create(baslik=v["baslik"], aciklama=v["aciklama"], yazar_adi=v["yazar_adi"].strip(),
-                                       plan=v["plan"], galeride=v["galeride"], kaynak=kaynak,
+                                       plan=v["plan"], sablon=v["sablon"], kaynak=kaynak,
                                        anahtar_ozeti=anahtar_ozeti(anahtar), ip_ozeti=ip_ozeti(_ip(request)))
             if v["onizleme"]:
                 t.onizleme = _onizleme_yaz(t, v["onizleme"])
@@ -118,7 +120,7 @@ class TasarimOlustur(APIView):
 
 class TasarimAyrinti(APIView):
     def get_throttles(self):
-        return [KayitSiniri()] if self.request.method in ("PUT", "DELETE") else []
+        return [KayitSiniri()] if self.request.method == "PUT" else []
 
     def _yazilabilir(self, request, kod):
         t = get_object_or_404(Tasarim, kod=kod)
@@ -141,16 +143,16 @@ class TasarimAyrinti(APIView):
         giris.is_valid(raise_exception=True)
         v = giris.validated_data
         t.baslik, t.aciklama, t.yazar_adi = v["baslik"], v["aciklama"], v["yazar_adi"].strip()
-        t.plan, t.galeride = v["plan"], v["galeride"]
+        t.plan, t.sablon = v["plan"], v["sablon"]
         if v["onizleme"]:
             t.onizleme = _onizleme_yaz(t, v["onizleme"])
         t.save()
         return Response(_ozet(t))
 
     def delete(self, request, kod):
-        t, red = self._yazilabilir(request, kod)
-        if red:
-            return red
+        if not yonetici_mi(request):
+            return Response({"detail": "Tasarımları yalnız yönetici silebilir."}, status=403)
+        t = get_object_or_404(Tasarim, kod=kod)
         _onizleme_sil(t)
         t.delete()
         return Response(status=204)
@@ -159,13 +161,27 @@ class TasarimAyrinti(APIView):
 class Galeri(APIView):
     def get(self, request):
         sira = request.query_params.get("sira", "yeni")
-        qs = Tasarim.objects.filter(galeride=True, gizli=False)
-        qs = qs.order_by("-begeni_sayisi", "-olusturma") if sira == "begeni" else qs.order_by("-olusturma")
+        tur = request.query_params.get("tur")
+        inceleme = tur == "inceleme"
+        if inceleme:
+            # Yönetici: şikâyet alanlar (listeden düşenler dahil), gizlenenler hariç
+            if not yonetici_mi(request):
+                return Response({"detail": "Yetki yok."}, status=403)
+            qs = Tasarim.objects.filter(gizli=False, sikayet_sayisi__gt=0)
+        else:
+            qs = Tasarim.objects.filter(galeride=True, gizli=False)
+            if tur == "sablon":
+                qs = qs.filter(sablon=True)
+        if inceleme:
+            qs = qs.order_by("-sikayet_sayisi", "-olusturma")
+        else:
+            qs = qs.order_by("-begeni_sayisi", "-olusturma") if sira == "begeni" else qs.order_by("-olusturma")
         try:
             sayfa = Paginator(qs, SAYFA_BOYU).page(max(1, int(request.query_params.get("sayfa", "1"))))
         except (EmptyPage, ValueError):
             return Response({"sonuclar": [], "sonraki": None, "toplam": qs.count()})
-        return Response({"sonuclar": [_ozet(t) for t in sayfa],
+        ozet = (lambda t: {**_ozet(t), "sikayet_sayisi": t.sikayet_sayisi, "galeride": t.galeride}) if inceleme else _ozet
+        return Response({"sonuclar": [ozet(t) for t in sayfa],
                          "sonraki": sayfa.next_page_number() if sayfa.has_next() else None,
                          "toplam": sayfa.paginator.count})
 
@@ -204,13 +220,18 @@ class SikayetEt(APIView):
         return Response({"detail": "Bildiriminiz alındı. Teşekkürler."}, status=201)
 
 
+class Yonetici(APIView):
+    """GET → {yonetici: bool}: arayüz Sil / Gizle düğmelerini buna göre gösterir."""
+
+    def get(self, request):
+        return Response({"yonetici": yonetici_mi(request)})
+
+
 class Moderasyon(APIView):
-    """POST {gizli: bool, galeride?: bool} — Authorization: Bearer TASARLA_MODERASYON_TOKEN."""
+    """POST {gizli?: bool, galeride?: bool} — yalnız yönetici (Pusula rolü ya da moderasyon anahtarı)."""
 
     def post(self, request, kod):
-        beklenen = settings.MODERASYON_TOKEN
-        gelen = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-        if not beklenen or not hmac.compare_digest(gelen, beklenen):
+        if not yonetici_mi(request):
             return Response({"detail": "Yetki yok."}, status=403)
         t = get_object_or_404(Tasarim, kod=kod)
         alanlar = []

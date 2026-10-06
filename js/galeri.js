@@ -1,9 +1,11 @@
 /* ============================================================
  *  tarus Tasarla — tasarım kaydetme, bağlantıyla paylaşma ve galeri
  *
- *  Hesap yok (kullanıcı kararı 2026-10-06): kayıtta sunucu bir düzenleme
+ *  Kullanıcı kararları (2026-10-06): hesap yok; bütün tasarımlar galeride
+ *  herkese açık; tasarım şablon olarak eklenebilir; silme ve gizleme yalnız
+ *  yöneticide (Pusula SUPERADMIN'i bağlıyken). Kayıtta sunucu bir düzenleme
  *  anahtarı verir; anahtar yalnız bu tarayıcıda (localStorage) durur, aynı
- *  tasarımı güncellemek / silmek için gerekir. Başkasının tasarımı açılıp
+ *  tasarımı güncellemek için gerekir. Başkasının tasarımı / bir şablon açılıp
  *  değiştirilirse "Paylaş" yeni bir tasarım (kopya) kaydeder.
  *
  *  Uçlar (api/, aynı alan adında /api/ altında):
@@ -11,8 +13,9 @@
  *    POST   /api/tasarimlar/              → kayıt, {kod, anahtar, …}
  *    GET    /api/tasarimlar/<kod>/        → plan + bilgiler
  *    PUT    /api/tasarimlar/<kod>/        → güncelleme (X-Tasarla-Anahtar)
- *    DELETE /api/tasarimlar/<kod>/        → silme (X-Tasarla-Anahtar)
- *    GET    /api/galeri/?sira=&sayfa=     → herkese açık liste
+ *    GET    /api/galeri/?sira=&tur=&sayfa= → herkese açık liste (tur=sablon; tur=inceleme yönetici)
+ *    GET    /api/yonetici/                → {yonetici}: Pusula belirteciyle (Authorization: Bearer)
+ *    DELETE /api/tasarimlar/<kod>/        · POST /api/moderasyon/<kod>/ → yalnız yönetici
  *    POST   /api/tasarimlar/<kod>/begen/  · /sikayet/
  *
  *  Paylaşım adresi: https://tasarla.tarus.tr/?t=<kod>
@@ -51,7 +54,7 @@
       baslik: String(form.baslik || '').trim().slice(0, 80),
       yazar_adi: String(form.yazar_adi || '').trim().slice(0, 60),
       aciklama: String(form.aciklama || '').trim().slice(0, 500),
-      galeride: !!form.galeride,
+      sablon: !!form.sablon,
       plan: {furniture: state.furniture, rooms: state.rooms, demolished: state.demolished, measures: state.measures},
       onizleme: onizleme || '',
       kaynak: kaynak || '',
@@ -77,10 +80,13 @@
   const acikTasarim = () => oku(ACIK, null);
   const tarihYaz = iso => new Date(iso).toLocaleDateString('tr-TR', {day: '2-digit', month: '2-digit', year: 'numeric'});
 
-  async function istek(yol, {yontem = 'GET', govde, anahtar} = {}){
+  let yonetici = false;                          // Pusula SUPERADMIN'i bağlıyken (sunucu doğrular)
+  async function istek(yol, {yontem = 'GET', govde, anahtar, yetkili} = {}){
     const basliklar = {'Accept': 'application/json'};
     if (govde !== undefined) basliklar['Content-Type'] = 'application/json';
     if (anahtar) basliklar['X-Tasarla-Anahtar'] = anahtar;
+    const belirtec = kok.PusulaOturum?.belirtec?.();
+    if (yetkili && belirtec) basliklar['Authorization'] = `Bearer ${belirtec}`;
     const y = await fetch(API + yol, {method: yontem, headers: basliklar, body: govde === undefined ? undefined : JSON.stringify(govde), credentials: 'omit'});
     if (y.status === 204) return null;
     let veri = null; try { veri = await y.json(); } catch(e) {}
@@ -122,14 +128,14 @@
         <label class="full">Başlık<input id="gBaslik" maxlength="80" required value="${esc(acik?.baslik || '')}" placeholder="Örn. Ferah salon, çalışma köşeli yatak odası" autofocus></label>
         <label class="full">Adınız <small>(isteğe bağlı, galeride görünür)</small><input id="gYazar" maxlength="60" value="${esc(acik?.yazar_adi || localStorage.getItem(YAZAR) || '')}"></label>
         <label class="full">Açıklama <small>(isteğe bağlı)</small><textarea id="gAciklama" maxlength="500" rows="3">${esc(benim ? acik.aciklama || '' : '')}</textarea></label>
-        <label class="full onay"><input type="checkbox" id="gGaleride" ${acik && benim && acik.galeride === false ? '' : 'checked'}> Galeride herkes görsün</label>
+        <label class="full onay"><input type="checkbox" id="gSablon" ${benim && acik.sablon ? 'checked' : ''}> Şablon olarak ekle <small>(başkaları yeni tasarıma bununla başlayabilir)</small></label>
         <input id="gWeb" class="bal-kupu" tabindex="-1" autocomplete="off" aria-hidden="true">
       </form>
-      <p class="muted galeri-not">${benim ? 'Bu tasarımı daha önce bu tarayıcıdan kaydettiniz; «Güncelle» aynı bağlantıyı korur.' : acik ? `«${esc(acik.baslik)}» üzerine kurduğunuz plan yeni bir tasarım olarak kaydedilir.` : 'Hesap gerekmez. Kayıttan sonra bağlantıyı paylaşabilirsiniz; tasarımı yalnız bu tarayıcıdan güncelleyip silebilirsiniz.'}</p>`;
+      <p class="muted galeri-not">Tasarımlar galeride herkese açıktır. ${benim ? 'Bu tasarımı daha önce bu tarayıcıdan kaydettiniz; «Güncelle» aynı bağlantıyı korur.' : acik ? `«${esc(acik.baslik || acik.kaynakBaslik)}» üzerine kurduğunuz plan yeni bir tasarım olarak kaydedilir.` : 'Hesap gerekmez. Kayıttan sonra bağlantıyı paylaşabilirsiniz; tasarımı yalnız bu tarayıcıdan güncelleyebilirsiniz.'}</p>`;
     const dugmeler = [{etiket: 'Vazgeç', deger: null}];
     const gonder = yeni => async (b, kapat) => {
       const form = {baslik: $('#gBaslik').value, yazar_adi: $('#gYazar').value, aciklama: $('#gAciklama').value,
-                    galeride: $('#gGaleride').checked, web_sitesi: $('#gWeb').value};
+                    sablon: $('#gSablon').checked, web_sitesi: $('#gWeb').value};
       if (!form.baslik.trim()){ $('#gBaslik').focus(); return K().toast('Başlık gerekli', 'uyari'); }
       b.disabled = true;
       try {
@@ -139,7 +145,7 @@
         const k = kayitlarim();
         k[sonuc.kod] = {anahtar: yeni ? sonuc.anahtar : benim.anahtar, baslik: sonuc.baslik, tarih: sonuc.guncelleme};
         yaz(KAYITLARIM, k);
-        yaz(ACIK, {kod: sonuc.kod, baslik: sonuc.baslik, yazar_adi: sonuc.yazar_adi, aciklama: sonuc.aciklama, galeride: sonuc.galeride});
+        yaz(ACIK, {kod: sonuc.kod, baslik: sonuc.baslik, yazar_adi: sonuc.yazar_adi, aciklama: sonuc.aciklama, sablon: sonuc.sablon});
         try { localStorage.setItem(YAZAR, form.yazar_adi.trim()); } catch(e) {}
         P().baslik(sonuc.baslik);
         kapat(true);
@@ -154,9 +160,9 @@
   function baglantiGoster(t){
     const adres = paylasimAdresi(t.kod, location.origin);
     K().dialog({baslik: 'Tasarım kaydedildi', genislik: 'dar', govde: `
-      <p>${t.galeride ? 'Tasarımınız galeride herkese görünür.' : 'Tasarımınız yalnız bağlantıyı bilenlere açık.'} Bağlantı:</p>
+      <p>Tasarımınız galeride herkese açık${t.sablon ? ' ve şablonlar arasında' : ''}. Bağlantı:</p>
       <div class="galeri-baglanti"><input id="gAdres" readonly value="${esc(adres)}"><button class="dugme" id="gKopyala">${kok.ikon('copy')}Kopyala</button></div>
-      <p class="muted galeri-not">Düzenleme anahtarı bu tarayıcıda saklanır. Tarayıcı verisini silerseniz tasarımı artık güncelleyemezsiniz; bağlantı çalışmaya devam eder.</p>`,
+      <p class="muted galeri-not">Düzenleme anahtarı bu tarayıcıda saklanır. Tarayıcı verisini silerseniz tasarımı artık güncelleyemezsiniz; bağlantı çalışmaya devam eder. Tasarımları yalnız yönetici kaldırabilir.</p>`,
       dugmeler: [{etiket: 'Tamam', tur: 'birincil'}],
       acilis: kutu => {
         kutu.querySelector('#gKopyala').onclick = async () => {
@@ -167,55 +173,60 @@
   }
 
   /* ---------- Galeri ---------- */
-  function kart(t, benim){
+  function kart(t){
     return `<article class="galeri-kart" data-kod="${esc(t.kod)}">
-      <button class="galeri-gorsel" data-ac title="Tasarımı aç">${t.onizleme ? `<img src="${esc(t.onizleme)}" alt="" loading="lazy">` : kok.ikon('image')}</button>
+      <button class="galeri-gorsel" data-ac title="${t.sablon ? 'Bu şablonla başla' : 'Tasarımı aç'}">${t.onizleme ? `<img src="${esc(t.onizleme)}" alt="" loading="lazy">` : kok.ikon('image')}${t.sablon ? '<span class="galeri-rozet">Şablon</span>' : ''}</button>
       <div class="galeri-bilgi">
         <b title="${esc(t.baslik)}">${esc(t.baslik)}</b>
-        <small>${esc(t.yazar_adi || 'Adsız')} · ${tarihYaz(t.olusturma)}</small>
+        <small>${esc(t.yazar_adi || 'Adsız')} · ${tarihYaz(t.olusturma)}${t.sikayet_sayisi ? ` · ${t.sikayet_sayisi} şikâyet` : ''}</small>
       </div>
       <div class="galeri-eylem">
         <button class="dugme kucuk" data-begen title="Beğen" aria-label="Beğen: ${t.begeni_sayisi}">${kok.ikon('heart', 14)}<span>${t.begeni_sayisi}</span></button>
-        <button class="dugme kucuk birincil" data-ac>Aç</button>
-        ${benim ? `<button class="dugme kucuk tehlike" data-sil title="Tasarımı sil" aria-label="Tasarımı sil">${kok.ikon('trash', 14)}</button>`
-                : `<button class="dugme kucuk" data-sikayet title="Uygunsuz içerik bildir" aria-label="Uygunsuz içerik bildir">${kok.ikon('flag', 14)}</button>`}
+        <button class="dugme kucuk birincil" data-ac>${t.sablon ? 'Kullan' : 'Aç'}</button>
+        ${yonetici ? `<button class="dugme kucuk" data-gizle title="Galeriden ve bağlantısından gizle" aria-label="Gizle">${kok.ikon('flag', 14)}</button>
+                      <button class="dugme kucuk tehlike" data-sil title="Tasarımı sil (yönetici)" aria-label="Tasarımı sil">${kok.ikon('trash', 14)}</button>`
+                   : `<button class="dugme kucuk" data-sikayet title="Uygunsuz içerik bildir" aria-label="Uygunsuz içerik bildir">${kok.ikon('flag', 14)}</button>`}
       </div>
     </article>`;
   }
 
+  async function yoneticiMi(){
+    if (!kok.PusulaOturum?.oturumVar?.()) return false;
+    try { return (await istek('/yonetici/', {yetkili: true})).yonetici === true; } catch(e) { return false; }
+  }
+
   async function galeriAc(){
-    let sira = 'yeni', sonraki = 1, kutuEl = null;
+    yonetici = await yoneticiMi();
+    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = null;
     const yukle = async (sifirla) => {
       const liste = kutuEl.querySelector('#galeriListe'), daha = kutuEl.querySelector('#galeriDaha');
       if (sifirla){ sonraki = 1; liste.innerHTML = `<div class="galeri-bos">${kok.ikon('loader')} Yükleniyor…</div>`; }
       daha.hidden = true;
       try {
-        const v = await istek(`/galeri/?sira=${sira}&sayfa=${sonraki}`);
-        const k = kayitlarim();
+        const ek = tur === 'tumu' ? '' : `&tur=${tur}`;
+        const v = await istek(`/galeri/?sira=${sira}${ek}&sayfa=${sonraki}`, {yetkili: tur === 'inceleme'});
         if (sifirla) liste.innerHTML = '';
-        liste.insertAdjacentHTML('beforeend', v.sonuclar.map(t => kart(t, !!k[t.kod])).join(''));
-        if (!liste.children.length) liste.innerHTML = '<div class="galeri-bos">Galeride henüz tasarım yok. İlk paylaşan siz olun.</div>';
+        liste.insertAdjacentHTML('beforeend', v.sonuclar.map(kart).join(''));
+        if (!liste.children.length) liste.innerHTML = `<div class="galeri-bos">${{tumu: 'Galeride henüz tasarım yok. İlk paylaşan siz olun.', sablon: 'Henüz şablon yok. Paylaşırken «Şablon olarak ekle»yi işaretleyin.', inceleme: 'Şikâyet alan tasarım yok.'}[tur]}</div>`;
         sonraki = v.sonraki; daha.hidden = !sonraki;
       } catch(e){ liste.innerHTML = `<div class="galeri-bos">${esc(e.message)}</div>`; }
     };
-    const benimkiler = Object.entries(kayitlarim());
+    const segment = (ad, secenekler, secili) => `<div class="tarus-toolbar-segment" role="tablist" data-grup="${ad}">${secenekler.map(([d, e]) =>
+      `<button class="tarus-toolbar-segment-button btn${d === secili ? ' is-active' : ''}" data-${ad}="${d}" role="tab" aria-selected="${d === secili}">${e}</button>`).join('')}</div>`;
     await K().dialog({baslik: 'Galeri', genislik: 'genis', govde: `
       <div class="galeri-ust">
-        <div class="tarus-toolbar-segment" role="tablist">
-          <button class="tarus-toolbar-segment-button btn is-active" data-sira="yeni" role="tab" aria-selected="true">En yeni</button>
-          <button class="tarus-toolbar-segment-button btn" data-sira="begeni" role="tab" aria-selected="false">En beğenilen</button>
-        </div>
-        ${benimkiler.length ? `<small class="muted">Bu tarayıcıdan paylaştığınız: ${benimkiler.length}</small>` : ''}
+        ${segment('tur', [['tumu', 'Tüm tasarımlar'], ['sablon', 'Şablonlar'], ...(yonetici ? [['inceleme', 'İnceleme']] : [])], tur)}
+        ${segment('sira', [['yeni', 'En yeni'], ['begeni', 'En beğenilen']], sira)}
       </div>
       <div class="galeri-izgara" id="galeriListe"></div>
       <div class="galeri-alt"><button class="dugme" id="galeriDaha" hidden>Daha fazla göster</button></div>`,
       acilis: (kutu, kapat) => {
         kutuEl = kutu;
-        kutu.querySelectorAll('[data-sira]').forEach(b => b.onclick = () => {
-          sira = b.dataset.sira;
-          kutu.querySelectorAll('[data-sira]').forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });
+        ['tur', 'sira'].forEach(ad => kutu.querySelectorAll(`[data-${ad}]`).forEach(b => b.onclick = () => {
+          if (ad === 'tur') tur = b.dataset.tur; else sira = b.dataset.sira;
+          kutu.querySelectorAll(`[data-${ad}]`).forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });
           yukle(true);
-        });
+        }));
         kutu.querySelector('#galeriDaha').onclick = () => yukle(false);
         kutu.querySelector('#galeriListe').addEventListener('click', async e => {
           const kartEl = e.target.closest('.galeri-kart'); if (!kartEl) return;
@@ -227,7 +238,8 @@
             catch(err){ K().toast(err.message, 'hata'); }
           }
           if (e.target.closest('[data-sikayet]')) sikayetEt(kod);
-          if (e.target.closest('[data-sil]') && await tasarimSil(kod)) kartEl.remove();
+          if (e.target.closest('[data-gizle]') && await yoneticiIslem(kod, 'gizle')) kartEl.remove();
+          if (e.target.closest('[data-sil]') && await yoneticiIslem(kod, 'sil')) kartEl.remove();
         });
         yukle(true);
       }});
@@ -235,7 +247,7 @@
 
   async function sikayetEt(kod){
     const neden = await K().dialog({baslik: 'Uygunsuz içerik bildir', genislik: 'dar', govde: `
-      <p>Bu tasarımı neden bildiriyorsunuz? Birkaç bildirim alan tasarım galeriden kaldırılır ve incelenir.</p>
+      <p>Bu tasarımı neden bildiriyorsunuz? Birkaç bildirim alan tasarım galeriden kaldırılır ve yönetici inceler.</p>
       <label class="form full">Neden <small>(isteğe bağlı)</small><input id="gNeden" maxlength="200"></label>`,
       dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: 'Bildir', tur: 'tehlike', kapatmaz: true, tikla: (b, kapat) => kapat($('#gNeden').value || '-')}]});
     if (neden === null) return;
@@ -243,34 +255,40 @@
     catch(e){ K().toast(e.message, 'hata'); }
   }
 
-  async function tasarimSil(kod){
-    const k = kayitlarim(); if (!k[kod]) return false;
-    if (!await K().onayla({baslik: 'Tasarımı sil', metin: `«${k[kod].baslik}» galeriden ve bağlantısından kalıcı olarak kaldırılır. Planınız bu tarayıcıda kalır.`, onay: 'Sil', tehlike: true})) return false;
+  // Yalnız yönetici: sil (kalıcı) ya da gizle (listeden ve bağlantısından kalkar, veri durur)
+  async function yoneticiIslem(kod, islem){
+    const sil = islem === 'sil';
+    if (!await K().onayla(sil
+      ? {baslik: 'Tasarımı sil', metin: 'Tasarım galeriden ve bağlantısından kalıcı olarak silinir. Bu işlem geri alınamaz.', onay: 'Sil', tehlike: true}
+      : {baslik: 'Tasarımı gizle', metin: 'Tasarım galeride görünmez, bağlantısı açılmaz. Veri silinmez.', onay: 'Gizle'})) return false;
     try {
-      await istek(`/tasarimlar/${kod}/`, {yontem: 'DELETE', anahtar: k[kod].anahtar});
-      delete k[kod]; yaz(KAYITLARIM, k);
-      if (acikTasarim()?.kod === kod){ try { localStorage.removeItem(ACIK); } catch(e) {} P().baslik(''); }
-      K().toast('Tasarım silindi', 'basari');
+      if (sil) await istek(`/tasarimlar/${kod}/`, {yontem: 'DELETE', yetkili: true});
+      else await istek(`/moderasyon/${kod}/`, {yontem: 'POST', govde: {gizli: true}, yetkili: true});
+      const k = kayitlarim(); if (k[kod]){ delete k[kod]; yaz(KAYITLARIM, k); }
+      K().toast(sil ? 'Tasarım silindi' : 'Tasarım gizlendi', 'basari');
       return true;
     } catch(e){ K().toast(e.message, 'hata'); return false; }
   }
 
-  /* ---------- Bağlantıdan açma ---------- */
+  /* ---------- Bağlantıdan / galeriden açma ---------- */
   async function tasarimAc(kod){
     let t;
     try { t = await istek(`/tasarimlar/${encodeURIComponent(kod)}/`, {anahtar: kayitlarim()[kod]?.anahtar}); }
     catch(e){ return K().toast(e.message, 'hata'); }
+    const sablon = t.sablon && !t.sahibi;
     const tamam = await K().dialog({baslik: t.baslik, govde: `
       ${t.onizleme ? `<img class="galeri-buyuk" src="${esc(t.onizleme)}" alt="">` : ''}
-      <p><b>${esc(t.yazar_adi || 'Adsız')}</b> · ${tarihYaz(t.olusturma)} · ${kok.ikon('heart', 14)} ${t.begeni_sayisi}</p>
+      <p>${t.sablon ? '<span class="galeri-rozet satir">Şablon</span> ' : ''}<b>${esc(t.yazar_adi || 'Adsız')}</b> · ${tarihYaz(t.olusturma)} · ${kok.ikon('heart', 14)} ${t.begeni_sayisi}</p>
       ${t.aciklama ? `<p class="galeri-aciklama">${esc(t.aciklama)}</p>` : ''}
-      <p class="muted galeri-not">Tasarım mevcut planınızın yerine açılır; «Geri al» (Ctrl Z) ile önceki planınıza dönebilirsiniz.${t.sahibi ? '' : ' Değişikliklerinizi «Paylaş» ile kendi tasarımınız olarak kaydedebilirsiniz.'}</p>`,
-      dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: 'Planı aç', tur: 'birincil'}]});
+      <p class="muted galeri-not">${sablon ? 'Şablon mevcut planınızın yerine açılır ve yeni tasarımınızın başlangıcı olur;' : 'Tasarım mevcut planınızın yerine açılır;'} «Geri al» (Ctrl Z) ile önceki planınıza dönebilirsiniz.${t.sahibi ? '' : ' Değişikliklerinizi «Paylaş» ile kendi tasarımınız olarak kaydedebilirsiniz.'}</p>`,
+      dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: sablon ? 'Bu şablonla başla' : 'Planı aç', tur: 'birincil'}]});
     if (!tamam) return;
     const p = P();
     p.yukle(planTemizle(t.plan, {MATS: p.MATS, WALLS: p.WALLS, varsayilanMalzeme: id => p.ROOMS.find(r => r.id === id)?.mat || Object.keys(p.MATS)[0]}));
-    yaz(ACIK, {kod: t.kod, baslik: t.baslik, yazar_adi: t.yazar_adi, aciklama: t.aciklama, galeride: t.galeride});
-    p.baslik(t.baslik);
+    // Şablondan başlanınca başlık boş: Paylaş yeni tasarım olarak kaydeder (kaynak = şablon)
+    yaz(ACIK, sablon ? {kod: t.kod, baslik: '', kaynakBaslik: t.baslik}
+                     : {kod: t.kod, baslik: t.baslik, yazar_adi: t.yazar_adi, aciklama: t.aciklama, sablon: t.sablon});
+    p.baslik(sablon ? `«${t.baslik}» şablonundan` : t.baslik);
   }
 
   // Plan sıfırlanınca / dosyadan yüklenince açık tasarım bağı kalkar (Paylaş yeni kayıt açar)
@@ -278,7 +296,7 @@
 
   async function basla(){
     const a = acikTasarim();
-    if (a) P().baslik(a.baslik);
+    if (a) P().baslik(a.baslik || (a.kaynakBaslik ? `«${a.kaynakBaslik}» şablonundan` : ''));
     let hazir = false;
     // Yalnız 200 yetmez: API'siz bir nginx /api/ yolunu index.html ile de yanıtlayabilir
     try { hazir = (await (await fetch(API + '/saglik/', {credentials: 'omit'})).json()).ok === true; } catch(e) {}

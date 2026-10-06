@@ -54,7 +54,9 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    | --- | --- |
    | `DJANGO_SECRET_KEY` | uzun rastgele metin (`python -c "import secrets;print(secrets.token_urlsafe(50))"`), parola yöneticisine yedek. Değişirse IP özetleri değişir (beğeni sayıları korunur) |
    | `DATABASE_URL` | `postgres://<kullanıcı>:<parola>@<iç ad>:5432/tasarla` |
-   | `TASARLA_MODERASYON_TOKEN` | ayrı rastgele metin; boşsa moderasyon ucu kapalı |
+   | `TASARLA_MODERASYON_TOKEN` | ayrı rastgele metin (curl ile moderasyon); boşsa bu yol kapalı |
+   | `TASARLA_YONETICI_ROLLERI` | (varsayılan `SUPERADMIN`) Pusula rolü bu listedeyse Tasarla yöneticisidir |
+   | `PUSULA_URL` | (varsayılan `https://pusula.tarus.tr`) yönetici rolü `/auth/me/` ile buradan sorulur |
    | `DJANGO_ALLOWED_HOSTS` | (varsayılan `tasarla.tarus.tr`) |
 
 4. **Kalıcı birimler**: `medya` (önizleme görselleri, web salt okunur bağlar) ve `veri`
@@ -66,12 +68,17 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    ```
    Tarayıcıda: üst çubukta **Galeri** ve **Paylaş** görünür → Paylaş → başlık → Kaydet:
    bağlantı `https://tasarla.tarus.tr/?t=<kod>`; gizli pencerede bağlantı tasarımı açar;
-   Galeri'de kart, önizleme görseli, beğeni; kendi kartında sil.
-6. **Moderasyon** (uygunsuz tasarımı gizleme):
+   Galeri'de kart, önizleme görseli, beğeni; «Şablon olarak ekle» → Şablonlar sekmesi, «Kullan».
+   Kendi kartında Sil **yok** (kullanıcı kararı: silme yalnız yöneticide).
+6. **Moderasyon** — silme ve gizleme yalnız yöneticide. Tasarla'da kullanıcı menüsü → «Pusula ile
+   bağlan» (SUPERADMIN hesabı) → Galeri: kartlarda Gizle / Sil, «İnceleme» sekmesinde şikâyet
+   alanlar. API rolü Pusula'nın `/auth/me/` ucuna sorar (api konteynerinin pusula.tarus.tr'ye
+   ulaşabilmesi gerekir). Sunucudan / curl ile:
    ```bash
    curl -X POST https://tasarla.tarus.tr/api/moderasyon/<kod>/ \
      -H "Authorization: Bearer $TASARLA_MODERASYON_TOKEN" -H 'Content-Type: application/json' \
      -d '{"gizli": true}'
+   curl -X DELETE https://tasarla.tarus.tr/api/tasarimlar/<kod>/ -H "Authorization: Bearer $TASARLA_MODERASYON_TOKEN"
    ```
    3 farklı ziyaretçiden şikâyet alan tasarım kendiliğinden galeriden düşer (bağlantısı açık kalır).
    Cloudflare "Only Turkey Access" istisnası `/api/` yollarını da kapsamalı (Tasarla zaten istisnada).

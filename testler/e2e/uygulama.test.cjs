@@ -265,20 +265,27 @@ test('plan: mobilya seçilir, sürüklenir, Delete ile silinir; duvar yıkılır
   await ctx.close();
 });
 
-/* Tasarla API taklidi (api/galeri): istekleri kaydeder */
+/* Tasarla API taklidi (api/galeri): istekleri kaydeder. Yönetici: Authorization ile gelen her istek. */
 function apiTaklidi(){
   const istekler = [], tasarimlar = {};
   const PLAN = {furniture: [{id: 'g1', type: 'bed', name: 'Galeri yatağı', cx: 8300, cy: 1000, w: 1800, d: 2000, rot: 0, color: '#c9d6df'}],
                 rooms: {}, demolished: [], measures: []};
-  tasarimlar.hazir1 = {kod: 'hazir1', baslik: 'Ferah salon', yazar_adi: 'Ayşe', aciklama: 'Açık mutfak', onizleme: '', begeni_sayisi: 4,
-                       kopya_sayisi: 0, goruntulenme: 0, galeride: true, olusturma: '2026-10-06T10:00:00+03:00', guncelleme: '2026-10-06T10:00:00+03:00', plan: PLAN};
+  const ortak = {aciklama: '', onizleme: '', kopya_sayisi: 0, goruntulenme: 0, olusturma: '2026-10-06T10:00:00+03:00', guncelleme: '2026-10-06T10:00:00+03:00', plan: PLAN};
+  tasarimlar.hazir1 = {...ortak, kod: 'hazir1', baslik: 'Ferah salon', yazar_adi: 'Ayşe', aciklama: 'Açık mutfak', begeni_sayisi: 4, sablon: false};
+  tasarimlar.sablon1 = {...ortak, kod: 'sablon1', baslik: 'Stüdyo daire şablonu', yazar_adi: 'Can', begeni_sayisi: 9, sablon: true};
   const isleyici = async route => {
     const req = route.request(), u = new URL(req.url()), yol = u.pathname, yontem = req.method();
     const govde = req.postData() ? JSON.parse(req.postData()) : null;
-    istekler.push({yontem, yol, ara: u.search, govde, anahtar: req.headers()['x-tasarla-anahtar'] || ''});
+    const yetki = req.headers()['authorization'] || '';
+    istekler.push({yontem, yol, ara: u.search, govde, anahtar: req.headers()['x-tasarla-anahtar'] || '', yetki});
     const json = (status, body) => route.fulfill({status, contentType: 'application/json', body: JSON.stringify(body)});
     if (yol === '/api/saglik/') return json(200, {ok: true});
-    if (yol === '/api/galeri/') return json(200, {sonuclar: Object.values(tasarimlar).filter(t => t.galeride).map(({plan, ...t}) => t), sonraki: null, toplam: 1});
+    if (yol === '/api/yonetici/') return json(200, {yonetici: !!yetki});
+    if (yol === '/api/galeri/'){
+      const tur = u.searchParams.get('tur');
+      const liste = Object.values(tasarimlar).filter(t => tur !== 'sablon' || t.sablon).map(({plan, ...t}) => t);
+      return json(200, {sonuclar: liste, sonraki: null, toplam: liste.length});
+    }
     if (yol === '/api/tasarimlar/' && yontem === 'POST'){
       const t = {...govde, kod: 'yeni42', begeni_sayisi: 0, kopya_sayisi: 0, goruntulenme: 0, onizleme: '/api/medya/onizleme/yeni42.webp', olusturma: '2026-10-06T11:00:00+03:00', guncelleme: '2026-10-06T11:00:00+03:00'};
       tasarimlar.yeni42 = t;
@@ -286,11 +293,15 @@ function apiTaklidi(){
     }
     const m = yol.match(/^\/api\/tasarimlar\/([^/]+)\/(begen\/)?$/);
     if (m && m[2]) return json(200, {begeni_sayisi: ++tasarimlar[m[1]].begeni_sayisi});
-    if (m && yontem === 'GET') return tasarimlar[m[1]] ? json(200, {...tasarimlar[m[1]], kaynak: '', sahibi: false}) : json(404, {detail: 'yok'});
+    if (m && yontem === 'GET') return tasarimlar[m[1]] ? json(200, {...tasarimlar[m[1]], kaynak: '', sahibi: m[1] === 'yeni42'}) : json(404, {detail: 'yok'});
     if (m && yontem === 'PUT') return json(200, {...tasarimlar[m[1]], ...govde});
+    if (m && yontem === 'DELETE'){
+      if (!yetki) return json(403, {detail: 'Tasarımları yalnız yönetici silebilir.'});
+      delete tasarimlar[m[1]]; return route.fulfill({status: 204});
+    }
     return json(404, {detail: 'yok'});
   };
-  return {isleyici, istekler};
+  return {isleyici, istekler, tasarimlar};
 }
 
 test('galeri: API yokken Paylaş ve Galeri görünmez', async () => {
@@ -302,19 +313,22 @@ test('galeri: API yokken Paylaş ve Galeri görünmez', async () => {
   await ctx.close();
 });
 
-test('galeri: paylaş → kayıt, anahtar tarayıcıda; ikinci paylaşım aynı tasarımı günceller', async () => {
+test('galeri: paylaş → kayıt (herkese açık, şablon seçeneği), anahtar tarayıcıda; ikinci paylaşım günceller', async () => {
   const api = apiTaklidi();
   const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
   await sayfa.click('#paylasBtn');
+  assert.equal(await sayfa.locator('#gGaleride').count(), 0, 'galeride seçeneği kalkmalı: bütün tasarımlar açık');
   await sayfa.fill('#gBaslik', 'Benim salonum');
   await sayfa.fill('#gYazar', 'Mehmet');
+  await sayfa.check('#gSablon');
   await sayfa.click('.tarus-dialog-footer .birincil');
   await sayfa.waitForSelector('#gAdres');
   assert.match(await sayfa.inputValue('#gAdres'), /\/\?t=yeni42$/);
   const kayit = api.istekler.find(i => i.yontem === 'POST' && i.yol === '/api/tasarimlar/');
   assert.equal(kayit.govde.baslik, 'Benim salonum');
   assert.equal(kayit.govde.yazar_adi, 'Mehmet');
-  assert.equal(kayit.govde.galeride, true);
+  assert.equal(kayit.govde.sablon, true);
+  assert.ok(!('galeride' in kayit.govde));
   assert.ok(kayit.govde.plan.furniture.length > 10, 'plan gitmedi');
   assert.match(kayit.govde.onizleme, /^data:image\/(webp|png);base64,/);
   const saklanan = await sayfa.evaluate(() => JSON.parse(localStorage.getItem('tasarla-tasarimlarim')));
@@ -323,12 +337,20 @@ test('galeri: paylaş → kayıt, anahtar tarayıcıda; ikinci paylaşım aynı 
   await sayfa.click('.tarus-dialog-footer .birincil');            // Tamam
 
   await sayfa.click('#paylasBtn');
+  assert.equal(await sayfa.isChecked('#gSablon'), true);
   assert.equal((await sayfa.textContent('.tarus-dialog-footer .birincil')).trim(), 'Güncelle');
   await sayfa.click('.tarus-dialog-footer .birincil');
   await sayfa.waitForSelector('#gAdres');
   const guncelle = api.istekler.find(i => i.yontem === 'PUT');
   assert.equal(guncelle.yol, '/api/tasarimlar/yeni42/');
   assert.equal(guncelle.anahtar, 'gizli-anahtar');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+
+  // Kendi tasarımı da olsa kullanıcı silemez: kartta Sil yok, Pusula belirteci gönderilmez
+  await sayfa.click('#galeriBtn');
+  await sayfa.waitForSelector('.galeri-kart[data-kod="yeni42"]');
+  assert.equal(await sayfa.locator('.galeri-kart [data-sil]').count(), 0);
+  assert.ok(api.istekler.every(i => !i.yetki), 'misafir istekte Authorization olmamalı');
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });
@@ -340,7 +362,7 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
   await sayfa.click('#galeriBtn');
   await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"]');
   await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-begen]');
-  await sayfa.waitForFunction(() => document.querySelector('.galeri-kart [data-begen] span').textContent === '5');
+  await sayfa.waitForFunction(() => document.querySelector('.galeri-kart[data-kod="hazir1"] [data-begen] span').textContent === '5');
   await sayfa.click('.galeri-kart[data-kod="hazir1"] .galeri-eylem [data-ac]');
   await sayfa.click('.tarus-dialog-footer .birincil');            // Planı aç
   await sayfa.waitForFunction(() => document.querySelectorAll('[data-fid]').length === 1);
@@ -353,6 +375,49 @@ test('galeri: listeden beğen ve aç; bağlantıyla açılan plan yüklenir, Ger
   await ikinci.sayfa.waitForSelector('.tarus-dialog h2:text("Ferah salon")');
   assert.ok(!ikinci.sayfa.url().includes('t=hazir1'), 'adreste kod kaldı');
   await ikinci.ctx.close();
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: şablonlar sekmesi; şablonla başlanan plan paylaşılınca yeni tasarım (kaynak = şablon)', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  await sayfa.click('#galeriBtn');
+  await sayfa.click('[data-tur="sablon"]');
+  await sayfa.waitForFunction(() => [...document.querySelectorAll('.galeri-kart')].map(k => k.dataset.kod).join() === 'sablon1');
+  assert.equal((await sayfa.textContent('.galeri-kart [data-ac].birincil')).trim(), 'Kullan');
+  assert.equal(await sayfa.locator('.galeri-kart .galeri-rozet').count(), 1);
+  await sayfa.click('.galeri-kart .galeri-eylem [data-ac]');
+  assert.equal((await sayfa.textContent('.tarus-dialog-footer .birincil')).trim(), 'Bu şablonla başla');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.waitForFunction(() => document.querySelectorAll('[data-fid]').length === 1);
+  assert.match(await sayfa.textContent('#subtitle'), /Stüdyo daire şablonu» şablonundan/);
+
+  await sayfa.click('#paylasBtn');
+  assert.equal(await sayfa.inputValue('#gBaslik'), '', 'şablondan başlanınca başlık boş gelmeli');
+  await sayfa.fill('#gBaslik', 'Benim stüdyom');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.waitForSelector('#gAdres');
+  const kayit = api.istekler.find(i => i.yontem === 'POST' && i.yol === '/api/tasarimlar/');
+  assert.equal(kayit.govde.kaynak, 'sablon1');
+  assert.equal(api.istekler.filter(i => i.yontem === 'PUT').length, 0);
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: yönetici (Pusula bağlı) Sil ve Gizle görür, istekler Pusula belirteciyle gider', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({sso: true, api: api.isleyici});
+  await sayfa.waitForFunction(() => document.querySelector('#kAd').textContent === 'Emre Yıldırım');
+  await sayfa.click('#galeriBtn');
+  await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"] [data-sil]');
+  assert.equal(await sayfa.locator('[data-tur="inceleme"]').count(), 1, 'yöneticiye İnceleme sekmesi');
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-sil]');
+  await sayfa.click('.tarus-dialog-footer .tehlike');             // onay: Sil
+  await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"]', {state: 'detached'});
+  const sil = api.istekler.find(i => i.yontem === 'DELETE');
+  assert.equal(sil.yol, '/api/tasarimlar/hazir1/');
+  assert.equal(sil.yetki, `Bearer ${JWT}`);
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });

@@ -57,7 +57,7 @@ class TasarimTestleri(TestCase):
         self.assertTrue(self.c.get(f"/api/tasarimlar/{kod}/", HTTP_X_TASARLA_ANAHTAR=anahtar).data["sahibi"])
         self.assertEqual(g.data["plan"]["furniture"][0]["name"], "Yatak")
 
-    def test_anahtarsiz_guncelleme_ve_silme_reddedilir(self):
+    def test_sahibi_gunceller_ama_silemez_yalniz_yonetici_siler(self):
         y = self.kaydet()
         kod, anahtar = y.data["kod"], y.data["anahtar"]
         govde = {"baslik": "Yeni ad", "plan": plan()}
@@ -67,7 +67,9 @@ class TasarimTestleri(TestCase):
         g = self.c.put(f"/api/tasarimlar/{kod}/", govde, format="json", HTTP_X_TASARLA_ANAHTAR=anahtar)
         self.assertEqual(g.status_code, 200)
         self.assertEqual(Tasarim.objects.get(kod=kod).baslik, "Yeni ad")
-        self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_X_TASARLA_ANAHTAR=anahtar).status_code, 204)
+        self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_X_TASARLA_ANAHTAR=anahtar).status_code, 403)
+        self.assertTrue(Tasarim.objects.filter(kod=kod).exists())
+        self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION="Bearer mod-anahtar").status_code, 204)
         self.assertFalse(Tasarim.objects.filter(kod=kod).exists())
 
     def test_svg_ozniteligine_giden_alanlar_kaliba_uymali(self):
@@ -110,13 +112,13 @@ class TasarimTestleri(TestCase):
         self.kaydet(web_sitesi="http://spam")
         self.assertEqual(Tasarim.objects.count(), 0)
 
-    def test_galeri_yalniz_galerideki_ve_gizli_olmayanlar_plan_yok(self):
+    def test_butun_tasarimlar_herkese_acik_gizlenen_haric_plan_yok(self):
         a = self.kaydet(baslik="A").data["kod"]
-        self.kaydet(baslik="B", galeride=False)
+        b = self.kaydet(baslik="B", galeride=False).data["kod"]   # eski istemci alanı yok sayılır
         g = self.kaydet(baslik="C").data["kod"]
         Tasarim.objects.filter(kod=g).update(gizli=True)
         y = self.c.get("/api/galeri/")
-        self.assertEqual([t["kod"] for t in y.data["sonuclar"]], [a])
+        self.assertEqual([t["kod"] for t in y.data["sonuclar"]], [b, a])
         self.assertNotIn("plan", y.data["sonuclar"][0])
         self.assertEqual(self.c.get(f"/api/tasarimlar/{g}/").status_code, 404)
 
@@ -166,3 +168,61 @@ class TasarimTestleri(TestCase):
             self.assertEqual(self.kaydet().status_code, 201)
             self.assertEqual(self.kaydet().status_code, 201)
             self.assertEqual(self.kaydet().status_code, 429)
+
+    def test_sablon_olarak_eklenir_ve_suzulur(self):
+        a = self.kaydet(baslik="Düz").data["kod"]
+        s = self.kaydet(baslik="Şablon", sablon=True)
+        self.assertTrue(s.data["sablon"])
+        self.assertEqual([t["kod"] for t in self.c.get("/api/galeri/?tur=sablon").data["sonuclar"]], [s.data["kod"]])
+        self.assertEqual(len(self.c.get("/api/galeri/").data["sonuclar"]), 2)
+        # sahibi şablonu kaldırabilir
+        self.c.put(f"/api/tasarimlar/{s.data['kod']}/", {"baslik": "Şablon", "plan": plan(), "sablon": False}, format="json",
+                   HTTP_X_TASARLA_ANAHTAR=s.data["anahtar"])
+        self.assertEqual(self.c.get("/api/galeri/?tur=sablon").data["sonuclar"], [])
+        self.assertTrue(Tasarim.objects.filter(kod=a).exists())
+
+    def _pusula(self, rol, kod=200):
+        """Pusula /auth/me/ taklidi: urlopen verilen rolü döndürür (ya da HTTP hatası)."""
+        import json
+        import urllib.error
+
+        class Yanit(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def ac(istek, timeout=None):
+            self.pusula_istekleri.append(istek)
+            if kod != 200:
+                raise urllib.error.HTTPError(istek.full_url, kod, "", {}, None)
+            return Yanit(json.dumps({"role": rol}).encode())
+        self.pusula_istekleri = []
+        return mock.patch("galeri.yonetici.urllib.request.urlopen", ac)
+
+    def test_pusula_superadmin_siler_gizler_ve_inceleme_listesini_gorur(self):
+        kod = self.kaydet().data["kod"]
+        jwt = "a.b.c"
+        with self._pusula("SUPERADMIN"):
+            self.assertTrue(self.c.get("/api/yonetici/", HTTP_AUTHORIZATION=f"Bearer {jwt}").data["yonetici"])
+            self.c.post(f"/api/tasarimlar/{kod}/sikayet/", {}, format="json")
+            liste = self.c.get("/api/galeri/?tur=inceleme", HTTP_AUTHORIZATION=f"Bearer {jwt}").data["sonuclar"]
+            self.assertEqual([(t["kod"], t["sikayet_sayisi"]) for t in liste], [(kod, 1)])
+            y = self.c.post(f"/api/moderasyon/{kod}/", {"gizli": True}, format="json", HTTP_AUTHORIZATION=f"Bearer {jwt}")
+            self.assertEqual(y.status_code, 200)
+            self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION=f"Bearer {jwt}").status_code, 204)
+        self.assertEqual(self.pusula_istekleri[0].full_url, "https://pusula.tarus.tr/auth/me/")
+        self.assertEqual(len(self.pusula_istekleri), 1, "rol önbelleğe alınmadı")
+
+    def test_pusula_yonetici_olmayan_rol_ve_gecersiz_oturum_reddedilir(self):
+        kod = self.kaydet().data["kod"]
+        with self._pusula("COMPANY_ADMIN"):
+            self.assertFalse(self.c.get("/api/yonetici/", HTTP_AUTHORIZATION="Bearer x.y.z").data["yonetici"])
+            self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION="Bearer x.y.z").status_code, 403)
+            self.assertEqual(self.c.get("/api/galeri/?tur=inceleme", HTTP_AUTHORIZATION="Bearer x.y.z").status_code, 403)
+        cache.clear()
+        with self._pusula("", kod=401):
+            self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION="Bearer q.w.e").status_code, 403)
+        self.assertFalse(self.c.get("/api/yonetici/").data["yonetici"])
+        self.assertTrue(Tasarim.objects.filter(kod=kod).exists())

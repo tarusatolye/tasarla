@@ -349,3 +349,7 @@ footer b{color:var(--text);font-weight:600}
 .galeri-alt [hidden]{display:none}
 .galeri-buyuk{width:100%;border-radius:10px;border:1px solid var(--bdr-2);margin-bottom:12px;background:#f7f4ee}
 .galeri-aciklama{white-space:pre-wrap}
+.galeri-gorsel{position:relative}
+.galeri-rozet{position:absolute;top:8px;left:8px;padding:2px 8px;border-radius:999px;font-size:var(--fs-xs);font-weight:600;background:var(--accent);color:#fff}
+.galeri-rozet.satir{position:static;display:inline-block;vertical-align:middle}
+.galeri-ust .tarus-toolbar-segment{flex-wrap:wrap}

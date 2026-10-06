@@ -37,11 +37,12 @@ test('boş ya da bozuk girdi boş plan verir', () => {
 
 test('kayıt gövdesi: metinler kırpılır, yalnız plan alanları gider', () => {
   const state = {furniture: [], rooms: {}, demolished: [], measures: [], gecici: 1};
-  const g = kayitGovdesi(state, {baslik: '  Salon  ', yazar_adi: ' Ayşe ', aciklama: 'x'.repeat(600), galeride: 1}, 'data:,', 'abc');
+  const g = kayitGovdesi(state, {baslik: '  Salon  ', yazar_adi: ' Ayşe ', aciklama: 'x'.repeat(600), sablon: 1}, 'data:,', 'abc');
   assert.equal(g.baslik, 'Salon');
   assert.equal(g.yazar_adi, 'Ayşe');
   assert.equal(g.aciklama.length, 500);
-  assert.equal(g.galeride, true);
+  assert.equal(g.sablon, true);
+  assert.ok(!('galeride' in g), 'bütün tasarımlar herkese açık: galeride seçeneği gitmemeli');
   assert.deepEqual(Object.keys(g.plan), ['furniture', 'rooms', 'demolished', 'measures']);
   assert.equal(g.kaynak, 'abc');
 });

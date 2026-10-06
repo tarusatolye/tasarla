@@ -28,8 +28,12 @@ class Tasarim(models.Model):
     yazar_adi = models.CharField(max_length=60, blank=True)
     plan = models.JSONField()
     onizleme = models.CharField(max_length=200, blank=True)   # MEDIA_ROOT'a göre göreli yol
+    # Bütün tasarımlar herkese açık (kullanıcı kararı 2026-10-06). galeride yalnız şikâyet
+    # eşiğinde kendiliğinden False olur: listeden düşer, bağlantısı açık kalır, yönetici bakar.
     galeride = models.BooleanField(default=True)
-    # Moderasyon: gizli tasarım galeride görünmez, bağlantısı da açılmaz
+    # Şablon: başkalarının yeni tasarıma başlangıç olarak kullanması için sunulan tasarım
+    sablon = models.BooleanField(default=False)
+    # Moderasyon (yalnız yönetici): gizli tasarım listede görünmez, bağlantısı da açılmaz
     gizli = models.BooleanField(default=False)
     kaynak = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="kopyalar")
     anahtar_ozeti = models.CharField(max_length=64)
@@ -44,7 +48,8 @@ class Tasarim(models.Model):
     class Meta:
         ordering = ["-olusturma"]
         indexes = [models.Index(fields=["galeride", "gizli", "-olusturma"]),
-                   models.Index(fields=["galeride", "gizli", "-begeni_sayisi"])]
+                   models.Index(fields=["galeride", "gizli", "-begeni_sayisi"]),
+                   models.Index(fields=["sablon", "galeride", "gizli", "-olusturma"])]
 
     def __str__(self):
         return f"{self.kod} · {self.baslik}"

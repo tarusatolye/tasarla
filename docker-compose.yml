@@ -23,6 +23,9 @@ services:
       # Boş bırakılırsa SQLite (veri birimi); PostgreSQL için postgres://…
       DATABASE_URL: ${DATABASE_URL:-}
       TASARLA_MODERASYON_TOKEN: ${TASARLA_MODERASYON_TOKEN:-}
+      # Silme/gizleme yalnız yönetici: Pusula oturumundaki rol bu listedeyse (galeri/yonetici.py)
+      TASARLA_YONETICI_ROLLERI: ${TASARLA_YONETICI_ROLLERI:-SUPERADMIN}
+      PUSULA_URL: ${PUSULA_URL:-https://pusula.tarus.tr}
       TASARLA_SIKAYET_ESIGI: ${TASARLA_SIKAYET_ESIGI:-3}
       TASARLA_KAYIT_SINIRI: ${TASARLA_KAYIT_SINIRI:-30/hour}
     volumes:

@@ -87,8 +87,12 @@ REST_FRAMEWORK = {
 
 # Galeri kuralları
 SIKAYET_ESIGI = int(os.environ.get("TASARLA_SIKAYET_ESIGI", "3"))   # bu kadar şikâyette galeriden düşer
-# Moderasyon ucu (POST /api/moderasyon/<kod>/): Authorization: Bearer <bu değer>. Boşsa uç kapalı.
+# Silme ve gizleme yalnız yöneticide (galeri/yonetici.py): Pusula oturumundaki rol bu listedeyse
+# ya da Authorization: Bearer TASARLA_MODERASYON_TOKEN (boşsa bu yol kapalı).
 MODERASYON_TOKEN = os.environ.get("TASARLA_MODERASYON_TOKEN", "")
+PUSULA_URL = os.environ.get("PUSULA_URL", "https://pusula.tarus.tr").rstrip("/")
+YONETICI_ROLLERI = _liste("TASARLA_YONETICI_ROLLERI", "SUPERADMIN")
+YONETICI_ONBELLEK_SN = int(os.environ.get("TASARLA_YONETICI_ONBELLEK_SN", "120"))
 
 LOGGING = {
     "version": 1,
