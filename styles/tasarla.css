@@ -37,7 +37,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 /* ---------- Üst çubuk ---------- */
 .ust{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 12px 10px 14px}
 .marka{display:flex;align-items:center;gap:12px;min-width:0}
-.marka img{width:40px;height:40px;border-radius:10px;flex:none}
+.marka img{width:40px;height:40px;border-radius:18.75%;flex:none}
 .marka-yazi{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 .marka-yazi b{font-size:var(--fs-lg);font-weight:800;letter-spacing:-.01em}
 .marka-yazi b span{color:var(--brand-tasarla)}
@@ -264,7 +264,7 @@ footer b{color:var(--text);font-weight:600}
 /* Hakkında */
 .hakkinda{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr);gap:16px}
 .hakkinda .kutu{border:1px solid var(--bdr-2);border-radius:14px;padding:18px;background:var(--ovl-2)}
-.hakkinda .rozet{width:64px;height:64px;border-radius:16px}
+.hakkinda .rozet{width:64px;height:64px;border-radius:18.75%}
 .hakkinda h3{margin:12px 0 4px;font-size:28px;font-weight:900;letter-spacing:-.02em}
 .hakkinda h3 span{color:var(--brand-tasarla)}
 .hakkinda dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:14px 0 0;font-size:var(--fs-sm)}

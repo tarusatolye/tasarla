@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>tarus Tasarla</title>
+  <rect width="512" height="512" rx="96" fill="#c46a3c"/>
+  <g transform="translate(64 64) scale(16)" color="#ffffff" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-6.8235 -6.8235) scale(0.0735)" stroke-width="23.8"><path d="M120 128h272v256H120z"/><path d="M256 128v92M256 292v92M120 256h84M300 256h92"/><path d="M300 300h60v52h-60z" fill="currentColor" stroke="none" opacity=".85"/></g></g>
+</svg>

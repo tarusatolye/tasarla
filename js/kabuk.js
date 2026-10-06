@@ -115,7 +115,7 @@
     const S = TasarlaSurum;
     dialog({baslik: 'Hakkında', genislik: 'genis', govde: `<div class="hakkinda">
       <div class="kutu">
-        <img class="rozet" src="public/icon.svg?v=1" alt="">
+        <img class="rozet" src="public/favicon.svg?v=1" alt="">
         <h3>tarus <span>Tasarla</span></h3>
         <div class="muted">Konut planını 2B ve 3B tasarlayın, tefrişi Türkiye'de yaygın ölçülerle yapın. Giriş gerekmez; planınız yalnız bu tarayıcıda saklanır.</div>
         <dl><dt>Uygulama</dt><dd>tarus Tasarla</dd><dt>Sürüm</dt><dd>${esc(S.APP_VERSION)}</dd><dt>İlk yayın</dt><dd>${esc(S.ILK_YAYIN)}</dd></dl>
