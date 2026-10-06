@@ -48,6 +48,12 @@ projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UC
 - Sağ tık menüsü ve Hata / Fikir Bildir (çizim alanı dışında; misafirken destek@tarus.tr'ye e-posta taslağı)
 - Plan tarayıcıda (`localStorage`) saklanır; PNG / JSON indirme ve JSON yükleme
 
+**Galeri ve paylaşım (api/, Docker Compose yayınında)**
+- Tasarımı hesapsız kaydedip `/?t=<kod>` bağlantısıyla paylaşma; şablon olarak ekleme; en çok 5 etiket
+- Hızlı Bakış: arama (başlık, açıklama, etiket; sunucuda), etiket süzgeci, beğeni, şikâyet
+- Bağlantı önizleme kartı (Open Graph): nginx SSI + `api/galeri/meta.py`, tasarımın görseli ve başlığıyla
+- Silme ve gizleme yalnız yöneticide (Pusula SUPERADMIN ya da `TASARLA_MODERASYON_TOKEN`)
+
 ## Çalıştırma
 
 Derleme adımı yoktur; statik dosyalar olarak sunulur.
@@ -66,6 +72,7 @@ dağıtılır, CDN gerekmez; yalnız Inter yazı tipi Google Fonts'tan yüklenir
 ```bash
 npm test          # birim testleri (node:test): aktarım, kütüphane, Türkçeleştirme, sürüm
 npm run test:e2e  # Playwright ile uçtan uca: girişsiz açılış, 3B sahne, Pusula taklit edilerek bağlantı, teklif, proje, Arkiv yüklemesi
+cd api && DJANGO_DEBUG=1 python manage.py test   # galeri API'si: kayıt, arama/etiket, moderasyon, önizleme kartı meta ucu
 ```
 
 ## Yayın

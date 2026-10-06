@@ -123,3 +123,43 @@ def onizleme_coz(veri_adresi):
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
         _hata("Önizleme görsel değil.")
     return cikti.getvalue()
+
+
+ETIKET_EN_FAZLA = 5
+ETIKET_EN_UZUN = 24
+# Harf ya da rakamla başlar ve biter; arada boşluk ve tire olabilir (alt çizgi yok)
+_ETIKET = re.compile(r"^[^\W_](?:[^\W_]|[ -])*$")
+
+
+def tr_kucuk(metin: str) -> str:
+    """Türkçe küçük harf: I → ı, İ → i (str.lower() «I»yı «i» yapar)."""
+    return metin.replace("I", "ı").replace("İ", "i").lower()
+
+
+def tr_buyuk(metin: str) -> str:
+    return metin.replace("i", "İ").replace("ı", "I").upper()
+
+
+def etiketleri_temizle(deger):
+    """Liste ya da virgüllü metin → en çok 5, tekil, küçük harfli etiket adı.
+
+    «#» öneki atılır, iç boşluklar teke iner; boş öğeler yok sayılır."""
+    if isinstance(deger, str):
+        deger = deger.split(",")
+    if not isinstance(deger, list):
+        _hata("Etiketler liste olmalı.")
+    temiz = []
+    for e in deger:
+        if not isinstance(e, str):
+            _hata("Etiket metin olmalı.")
+        ad = tr_kucuk(" ".join(e.strip().lstrip("#").split()))
+        if not ad or ad in temiz:
+            continue
+        if len(ad) > ETIKET_EN_UZUN:
+            _hata(f"Etiket en çok {ETIKET_EN_UZUN} karakter olabilir.")
+        if not _ETIKET.match(ad):
+            _hata("Etiket yalnız harf, rakam, boşluk ve tire içerebilir.")
+        temiz.append(ad)
+    if len(temiz) > ETIKET_EN_FAZLA:
+        _hata(f"En çok {ETIKET_EN_FAZLA} etiket eklenebilir.")
+    return temiz

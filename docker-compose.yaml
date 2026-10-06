@@ -28,6 +28,8 @@ services:
       # Silme/gizleme yalnız yönetici: Pusula oturumundaki rol bu listedeyse (galeri/yonetici.py)
       TASARLA_YONETICI_ROLLERI: ${TASARLA_YONETICI_ROLLERI:-SUPERADMIN}
       PUSULA_URL: ${PUSULA_URL:-https://pusula.tarus.tr}
+      # Bağlantı önizlemesi (Open Graph) mutlak adresleri (api/galeri/meta.py)
+      TASARLA_SITE_URL: ${TASARLA_SITE_URL:-https://tasarla.tarus.tr}
       TASARLA_SIKAYET_ESIGI: ${TASARLA_SIKAYET_ESIGI:-3}
       TASARLA_KAYIT_SINIRI: ${TASARLA_KAYIT_SINIRI:-30/hour}
     volumes:

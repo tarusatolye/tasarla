@@ -279,8 +279,8 @@ function apiTaklidi(){
   const PLAN = {furniture: [{id: 'g1', type: 'bed', name: 'Galeri yatağı', cx: 8300, cy: 1000, w: 1800, d: 2000, rot: 0, color: '#c9d6df'}],
                 rooms: {}, demolished: [], measures: []};
   const ortak = {aciklama: '', onizleme: '', kopya_sayisi: 0, goruntulenme: 0, olusturma: '2026-10-06T10:00:00+03:00', guncelleme: '2026-10-06T10:00:00+03:00', plan: PLAN};
-  tasarimlar.hazir1 = {...ortak, kod: 'hazir1', baslik: 'Ferah salon', yazar_adi: 'Ayşe', aciklama: 'Açık mutfak', begeni_sayisi: 4, sablon: false};
-  tasarimlar.sablon1 = {...ortak, kod: 'sablon1', baslik: 'Stüdyo daire şablonu', yazar_adi: 'Can', begeni_sayisi: 9, sablon: true};
+  tasarimlar.hazir1 = {...ortak, kod: 'hazir1', baslik: 'Ferah salon', yazar_adi: 'Ayşe', aciklama: 'Açık mutfak', begeni_sayisi: 4, sablon: false, etiketler: ['salon', 'iskandinav']};
+  tasarimlar.sablon1 = {...ortak, kod: 'sablon1', baslik: 'Stüdyo daire şablonu', yazar_adi: 'Can', begeni_sayisi: 9, sablon: true, etiketler: ['küçük ev']};
   const isleyici = async route => {
     const req = route.request(), u = new URL(req.url()), yol = u.pathname, yontem = req.method();
     const govde = req.postData() ? JSON.parse(req.postData()) : null;
@@ -290,10 +290,13 @@ function apiTaklidi(){
     if (yol === '/api/saglik/') return json(200, {ok: true});
     if (yol === '/api/yonetici/') return json(200, {yonetici: !!yetki});
     if (yol === '/api/galeri/'){
-      const tur = u.searchParams.get('tur');
-      const liste = Object.values(tasarimlar).filter(t => tur !== 'sablon' || t.sablon).map(({plan, ...t}) => t);
+      const tur = u.searchParams.get('tur'), q = (u.searchParams.get('q') || '').toLocaleLowerCase('tr-TR'), etiket = u.searchParams.get('etiket');
+      const liste = Object.values(tasarimlar).filter(t => tur !== 'sablon' || t.sablon)
+        .filter(t => !q || `${t.baslik} ${t.aciklama} ${(t.etiketler || []).join(' ')}`.toLocaleLowerCase('tr-TR').includes(q))
+        .filter(t => !etiket || (t.etiketler || []).includes(etiket)).map(({plan, ...t}) => t);
       return json(200, {sonuclar: liste, sonraki: null, toplam: liste.length});
     }
+    if (yol === '/api/etiketler/') return json(200, {etiketler: [{ad: 'salon', sayi: 1}, {ad: 'iskandinav', sayi: 1}, {ad: 'küçük ev', sayi: 1}]});
     if (yol === '/api/tasarimlar/' && yontem === 'POST'){
       const t = {...govde, kod: 'yeni42', begeni_sayisi: 0, kopya_sayisi: 0, goruntulenme: 0, onizleme: '/api/medya/onizleme/yeni42.webp', olusturma: '2026-10-06T11:00:00+03:00', guncelleme: '2026-10-06T11:00:00+03:00'};
       tasarimlar.yeni42 = t;
@@ -360,6 +363,46 @@ test('galeri: paylaş → kayıt (herkese açık, şablon seçeneği), anahtar t
   await sayfa.waitForSelector('.galeri-kart[data-kod="yeni42"]');
   assert.equal(await sayfa.locator('.galeri-kart [data-sil]').count(), 0);
   assert.ok(api.istekler.every(i => !i.yetki), 'misafir istekte Authorization olmamalı');
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: arama kutusu (gecikmeli, sunucuda) ve etiket süzgeci; paylaşırken etiket', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  await sayfa.waitForSelector('#hizliBakis:not([hidden]) .galeri-kart[data-kod="hazir1"]');
+  await sayfa.waitForSelector('#galeriEtiketler:not([hidden]) [data-etiket-sec="salon"]');
+  const galeriIstekleri = () => api.istekler.filter(i => i.yol === '/api/galeri/');
+  const once = galeriIstekleri().length;
+  await sayfa.type('#galeriAra', 'stüdyo', {delay: 30});
+  await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 1 && document.querySelector('.galeri-kart[data-kod="sablon1"]'));
+  assert.equal(galeriIstekleri().length - once, 1, 'yazarken her tuşta istek gitmemeli');
+  assert.equal(new URLSearchParams(galeriIstekleri().at(-1).ara).get('q'), 'stüdyo');
+  await sayfa.fill('#galeriAra', 'yok böyle');
+  await sayfa.waitForSelector('.galeri-bos:text("Aramanızla eşleşen tasarım yok.")');
+  await sayfa.click('#galeriAraTemizle');
+  await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 2);
+  // Etiket düğmesi süzer, ikinci basış kaldırır; karttaki etiket de süzer
+  await sayfa.click('#galeriEtiketler [data-etiket-sec="küçük ev"]');
+  await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 1);
+  assert.equal(new URLSearchParams(galeriIstekleri().at(-1).ara).get('etiket'), 'küçük ev');
+  assert.equal(await sayfa.getAttribute('#galeriEtiketler [data-etiket-sec="küçük ev"]', 'aria-pressed'), 'true');
+  await sayfa.click('#galeriEtiketler [data-etiket-sec="küçük ev"]');
+  await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 2);
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-etiket-sec="iskandinav"]');
+  await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 1 && document.querySelector('.galeri-kart[data-kod="hazir1"]'));
+  // Paylaş: etiketler gövdede, temizlenmiş
+  await sayfa.click('#hbCizim');
+  await sayfa.click('#paylasBtn');
+  await sayfa.fill('#gBaslik', 'Etiketli');
+  await sayfa.fill('#gEtiketler', ' Salon, #Işıklı Mutfak, salon');
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.waitForSelector('#gAdres');
+  const kayit = api.istekler.find(i => i.yontem === 'POST' && i.yol === '/api/tasarimlar/');
+  assert.deepEqual(kayit.govde.etiketler, ['salon', 'ışıklı mutfak']);
+  await sayfa.click('.tarus-dialog-footer .birincil');
+  await sayfa.click('#paylasBtn');
+  assert.equal(await sayfa.inputValue('#gEtiketler'), 'salon, ışıklı mutfak');
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });

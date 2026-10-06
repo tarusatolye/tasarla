@@ -1,7 +1,7 @@
 // Galeri: paylaşılan planın temizlenmesi ve kayıt gövdesi (tarayıcısız)
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {planTemizle, kayitGovdesi, paylasimAdresi} = require('../../js/galeri.js');
+const {planTemizle, kayitGovdesi, paylasimAdresi, etiketAyir, galeriSorgusu} = require('../../js/galeri.js');
 
 const ORTAM = {MATS: {parke: {}, seramik: {}}, WALLS: [[0, 0, 1, 1], [0, 0, 1, 1]], varsayilanMalzeme: () => 'parke'};
 
@@ -49,4 +49,36 @@ test('kayıt gövdesi: metinler kırpılır, yalnız plan alanları gider', () =
 
 test('paylaşım adresi sorgu parametresiyle (göreli js yolları /t/ altında kırılmasın)', () => {
   assert.equal(paylasimAdresi('ab cd', 'https://tasarla.tarus.tr'), 'https://tasarla.tarus.tr/?t=ab%20cd');
+});
+
+test('etiketler: Türkçe küçük harf, # ve fazla boşluk atılır, tekil, en çok 5', () => {
+  assert.deepEqual(etiketAyir(' Salon, #İskandinav ,salon,  Işıklı   Mutfak ,,'), ['salon', 'iskandinav', 'ışıklı mutfak']);
+  assert.deepEqual(etiketAyir('a,b,c,d,e,f,g'), ['a', 'b', 'c', 'd', 'e']);
+  assert.equal(etiketAyir('x'.repeat(40))[0].length, 24);
+  assert.deepEqual(etiketAyir(''), []);
+  assert.deepEqual(etiketAyir(undefined), []);
+  const g = kayitGovdesi({furniture: [], rooms: {}, demolished: [], measures: []}, {baslik: 'A', etiketler: 'Banyo, küçük ev'}, '', '');
+  assert.deepEqual(g.etiketler, ['banyo', 'küçük ev']);
+});
+
+test('galeri sorgusu: boş arama ve tümü gönderilmez, metin kodlanır', () => {
+  assert.equal(galeriSorgusu({}), '/galeri/?sira=yeni&sayfa=1');
+  assert.equal(galeriSorgusu({tur: 'sablon', sira: 'begeni', sayfa: 2, q: '  ferah   salon ', etiket: 'küçük ev'}),
+    '/galeri/?sira=begeni&tur=sablon&q=ferah+salon&etiket=k%C3%BC%C3%A7%C3%BCk+ev&sayfa=2');
+  assert.equal(galeriSorgusu({q: 'a&tur=inceleme'}), '/galeri/?sira=yeni&q=a%26tur%3Dinceleme&sayfa=1');
+  assert.equal(new URLSearchParams(galeriSorgusu({q: 'x'.repeat(200)}).split('?')[1]).get('q').length, 80);
+});
+
+// Bağlantı önizlemesi: nginx SSI index.html'deki bu bloğu işler (deploy/nginx.conf).
+test('index.html: Open Graph SSI bloğu ve varsayılan kart', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  const bas = html.slice(0, html.indexOf('</head>'));
+  assert.match(bas, /<!--# if expr="\$arg_t" -->\s*<!--# include virtual="\/_paylasim-meta\?t=\$arg_t" -->\s*<!--# else -->/);
+  const varsayilan = bas.slice(bas.indexOf('<!--# else -->'), bas.indexOf('<!--# endif -->'));
+  for (const ozellik of ['og:title', 'og:description', 'og:image', 'og:url']) assert.ok(varsayilan.includes(`property="${ozellik}"`), ozellik);
+  assert.match(varsayilan, /og:image" content="https:\/\/tasarla\.tarus\.tr\/public\/icon-512\.png"/);
+  const conf = fs.readFileSync(path.join(__dirname, '../../deploy/nginx.conf'), 'utf8');
+  assert.match(conf, /location = \/_paylasim-meta \{\s*internal;/);
+  assert.match(conf, /ssi on;/);
 });

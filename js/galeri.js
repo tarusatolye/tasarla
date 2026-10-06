@@ -13,13 +13,16 @@
  *    POST   /api/tasarimlar/              → kayıt, {kod, anahtar, …}
  *    GET    /api/tasarimlar/<kod>/        → plan + bilgiler
  *    PUT    /api/tasarimlar/<kod>/        → güncelleme (X-Tasarla-Anahtar)
- *    GET    /api/galeri/?sira=&tur=&sayfa= → herkese açık liste (tur=sablon; tur=inceleme yönetici)
+ *    GET    /api/galeri/?sira=&tur=&sayfa=&q=&etiket= → herkese açık liste (tur=sablon; tur=inceleme yönetici;
+ *                                           q: başlık/açıklama/etiket araması; etiket: tek etiket süzgeci)
+ *    GET    /api/etiketler/?tur=          → en çok kullanılan etiketler (süzgeç düğmeleri)
  *    GET    /api/yonetici/                → {yonetici}: Pusula belirteciyle (Authorization: Bearer)
  *    DELETE /api/tasarimlar/<kod>/        · POST /api/moderasyon/<kod>/ → yalnız yönetici
  *    POST   /api/tasarimlar/<kod>/begen/  · /sikayet/
  *
- *  Paylaşım adresi: https://tasarla.tarus.tr/?t=<kod>
- *  Saf fonksiyonlar (planTemizle, kayitGovdesi, paylasimAdresi) tarayıcısız test edilir: testler/birim.
+ *  Paylaşım adresi: https://tasarla.tarus.tr/?t=<kod> (bağlantı önizleme kartı: nginx SSI + api/galeri/meta.py)
+ *  Saf fonksiyonlar (planTemizle, kayitGovdesi, paylasimAdresi, etiketAyir, galeriSorgusu) tarayıcısız
+ *  test edilir: testler/birim.
  * ============================================================ */
 (function (kok) {
   const API = '/api';
@@ -49,12 +52,38 @@
     };
   }
 
+  /* Etiket kutusu (virgülle ayrılmış) → sunucunun kabul ettiği biçim: Türkçe küçük harf,
+   * «#» öneki ve fazla boşluk atılır, tekil, en çok 5. Geçersiz karakter sunucuda reddedilir. */
+  const ETIKET_EN_FAZLA = 5, ETIKET_EN_UZUN = 24;
+  const trKucuk = m => String(m).replace(/I/g, 'ı').replace(/İ/g, 'i').toLocaleLowerCase('tr-TR');
+  function etiketAyir(metin){
+    const liste = Array.isArray(metin) ? metin : String(metin || '').split(',');
+    const temiz = [];
+    for (const e of liste){
+      const ad = trKucuk(String(e).trim().replace(/^#+/, '').split(/\s+/).filter(Boolean).join(' ')).slice(0, ETIKET_EN_UZUN).trim();
+      if (ad && !temiz.includes(ad)) temiz.push(ad);
+    }
+    return temiz.slice(0, ETIKET_EN_FAZLA);
+  }
+
+  // Galeri liste sorgusu: boş alanlar gönderilmez
+  function galeriSorgusu({tur = 'tumu', sira = 'yeni', sayfa = 1, q = '', etiket = ''} = {}){
+    const p = new URLSearchParams({sira});
+    if (tur && tur !== 'tumu') p.set('tur', tur);
+    const arama = String(q || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    if (arama) p.set('q', arama);
+    if (etiket) p.set('etiket', etiket);
+    p.set('sayfa', String(sayfa));
+    return `/galeri/?${p}`;
+  }
+
   function kayitGovdesi(state, form, onizleme, kaynak){
     return {
       baslik: String(form.baslik || '').trim().slice(0, 80),
       yazar_adi: String(form.yazar_adi || '').trim().slice(0, 60),
       aciklama: String(form.aciklama || '').trim().slice(0, 500),
       sablon: !!form.sablon,
+      etiketler: etiketAyir(form.etiketler),
       plan: {furniture: state.furniture, rooms: state.rooms, demolished: state.demolished, measures: state.measures},
       onizleme: onizleme || '',
       kaynak: kaynak || '',
@@ -64,7 +93,7 @@
 
   const paylasimAdresi = (kod, koken) => `${koken}/?t=${encodeURIComponent(kod)}`;
 
-  const disa = {planTemizle, kayitGovdesi, paylasimAdresi};
+  const disa = {planTemizle, kayitGovdesi, paylasimAdresi, etiketAyir, galeriSorgusu};
   kok.TasarlaGaleri = disa;
   if (typeof module !== 'undefined') module.exports = disa;
   if (typeof document === 'undefined') return;
@@ -128,6 +157,7 @@
         <label class="full">Başlık<input id="gBaslik" maxlength="80" required value="${esc(acik?.baslik || '')}" placeholder="Örn. Ferah salon, çalışma köşeli yatak odası" autofocus></label>
         <label class="full">Adınız <small>(isteğe bağlı, galeride görünür)</small><input id="gYazar" maxlength="60" value="${esc(acik?.yazar_adi || localStorage.getItem(YAZAR) || '')}"></label>
         <label class="full">Açıklama <small>(isteğe bağlı)</small><textarea id="gAciklama" maxlength="500" rows="3">${esc(benim ? acik.aciklama || '' : '')}</textarea></label>
+        <label class="full">Etiketler <small>(isteğe bağlı, virgülle ayırın, en çok ${ETIKET_EN_FAZLA})</small><input id="gEtiketler" maxlength="160" autocomplete="off" value="${esc(benim ? (acik.etiketler || []).join(', ') : '')}" placeholder="Örn. salon, küçük ev, iskandinav"></label>
         <label class="full onay"><input type="checkbox" id="gSablon" ${benim && acik.sablon ? 'checked' : ''}> Şablon olarak ekle <small>(başkaları yeni tasarıma bununla başlayabilir)</small></label>
         <input id="gWeb" class="bal-kupu" tabindex="-1" autocomplete="off" aria-hidden="true">
       </form>
@@ -135,7 +165,7 @@
     const dugmeler = [{etiket: 'Vazgeç', deger: null}];
     const gonder = yeni => async (b, kapat) => {
       const form = {baslik: $('#gBaslik').value, yazar_adi: $('#gYazar').value, aciklama: $('#gAciklama').value,
-                    sablon: $('#gSablon').checked, web_sitesi: $('#gWeb').value};
+                    sablon: $('#gSablon').checked, etiketler: $('#gEtiketler').value, web_sitesi: $('#gWeb').value};
       if (!form.baslik.trim()){ $('#gBaslik').focus(); return K().toast('Başlık gerekli', 'uyari'); }
       b.disabled = true;
       try {
@@ -145,7 +175,7 @@
         const k = kayitlarim();
         k[sonuc.kod] = {anahtar: yeni ? sonuc.anahtar : benim.anahtar, baslik: sonuc.baslik, tarih: sonuc.guncelleme};
         yaz(KAYITLARIM, k);
-        yaz(ACIK, {kod: sonuc.kod, baslik: sonuc.baslik, yazar_adi: sonuc.yazar_adi, aciklama: sonuc.aciklama, sablon: sonuc.sablon});
+        yaz(ACIK, {kod: sonuc.kod, baslik: sonuc.baslik, yazar_adi: sonuc.yazar_adi, aciklama: sonuc.aciklama, sablon: sonuc.sablon, etiketler: sonuc.etiketler || []});
         try { localStorage.setItem(YAZAR, form.yazar_adi.trim()); } catch(e) {}
         P().baslik(sonuc.baslik);
         kapat(true);
@@ -179,6 +209,7 @@
       <div class="galeri-bilgi">
         <b title="${esc(t.baslik)}">${esc(t.baslik)}</b>
         <small>${esc(t.yazar_adi || 'Adsız')} · ${tarihYaz(t.olusturma)}${t.sikayet_sayisi ? ` · ${t.sikayet_sayisi} şikâyet` : ''}</small>
+        ${t.etiketler?.length ? `<div class="galeri-etiketler">${t.etiketler.map(e => `<button class="galeri-etiket" data-etiket-sec="${esc(e)}" title="«${esc(e)}» etiketli tasarımlar">#${esc(e)}</button>`).join('')}</div>` : ''}
       </div>
       <div class="galeri-eylem">
         <button class="dugme kucuk" data-begen title="Beğen" aria-label="Beğen: ${t.begeni_sayisi}">${kok.ikon('heart', 14)}<span>${t.begeni_sayisi}</span></button>
@@ -223,19 +254,41 @@
     if (!el) return;
     if (sayfaAcikMi()) return sayfaKapat();
     yonetici = await yoneticiMi();
-    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = el;
+    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = el, q = '', etiket = '', istekNo = 0;
     const yukle = async (sifirla) => {
       const liste = kutuEl.querySelector('#galeriListe'), daha = kutuEl.querySelector('#galeriDaha');
+      const no = ++istekNo;                       // yazarken eski yanıt yenisinin üstüne yazmasın
       if (sifirla){ sonraki = 1; liste.innerHTML = `<div class="galeri-bos">${kok.ikon('loader')} Yükleniyor…</div>`; }
       daha.hidden = true;
       try {
-        const ek = tur === 'tumu' ? '' : `&tur=${tur}`;
-        const v = await istek(`/galeri/?sira=${sira}${ek}&sayfa=${sonraki}`, {yetkili: tur === 'inceleme'});
+        const v = await istek(galeriSorgusu({tur, sira, sayfa: sifirla ? 1 : sonraki, q, etiket}), {yetkili: tur === 'inceleme'});
+        if (no !== istekNo) return;
         if (sifirla) liste.innerHTML = '';
         liste.insertAdjacentHTML('beforeend', v.sonuclar.map(kart).join(''));
-        if (!liste.children.length) liste.innerHTML = `<div class="galeri-bos">${{tumu: 'Galeride henüz tasarım yok. İlk paylaşan siz olun.', sablon: 'Henüz şablon yok. Paylaşırken «Şablon olarak ekle»yi işaretleyin.', inceleme: 'Şikâyet alan tasarım yok.'}[tur]}</div>`;
+        if (!liste.children.length) liste.innerHTML = `<div class="galeri-bos">${q.trim() || etiket ? 'Aramanızla eşleşen tasarım yok.'
+          : {tumu: 'Galeride henüz tasarım yok. İlk paylaşan siz olun.', sablon: 'Henüz şablon yok. Paylaşırken «Şablon olarak ekle»yi işaretleyin.', inceleme: 'Şikâyet alan tasarım yok.'}[tur]}</div>`;
         sonraki = v.sonraki; daha.hidden = !sonraki;
-      } catch(e){ liste.innerHTML = `<div class="galeri-bos">${esc(e.message)}</div>`; }
+      } catch(e){ if (no === istekNo) liste.innerHTML = `<div class="galeri-bos">${esc(e.message)}</div>`; }
+    };
+    // Etiket süzgeci: galeride en çok kullanılan etiketler; seçili etiket listede olmasa da görünür
+    const etiketleriYukle = async () => {
+      const yer = kutuEl.querySelector('#galeriEtiketler');
+      let liste = [];
+      try { liste = (await istek(`/etiketler/${tur === 'sablon' ? '?tur=sablon' : ''}`)).etiketler || []; } catch(e) {}
+      const adlar = liste.map(e => e.ad);
+      if (etiket && !adlar.includes(etiket)) adlar.unshift(etiket);
+      yer.hidden = !adlar.length;
+      yer.innerHTML = adlar.map(ad => `<button class="galeri-etiket${ad === etiket ? ' is-active' : ''}" data-etiket-sec="${esc(ad)}" aria-pressed="${ad === etiket}">#${esc(ad)}</button>`).join('');
+    };
+    const etiketSec = ad => {
+      etiket = etiket === ad ? '' : ad;
+      let var_ = false;
+      kutuEl.querySelectorAll('#galeriEtiketler [data-etiket-sec]').forEach(b => {
+        const secili = b.dataset.etiketSec === etiket; if (secili) var_ = true;
+        b.classList.toggle('is-active', secili); b.setAttribute('aria-pressed', String(secili));
+      });
+      if (etiket && !var_) etiketleriYukle();
+      yukle(true);
     };
     const segment = (ad, secenekler, secili) => `<div class="tarus-toolbar-segment" role="tablist" data-grup="${ad}">${secenekler.map(([d, e]) =>
       `<button class="tarus-toolbar-segment-button btn${d === secili ? ' is-active' : ''}" data-${ad}="${d}" role="tab" aria-selected="${d === secili}">${e}</button>`).join('')}</div>`;
@@ -247,8 +300,16 @@
       </div>
       <div class="galeri-ust">
         ${segment('tur', [['tumu', 'Tüm tasarımlar'], ['sablon', 'Şablonlar'], ...(yonetici ? [['inceleme', 'İnceleme']] : [])], tur)}
-        ${segment('sira', [['yeni', 'En yeni'], ['begeni', 'En beğenilen']], sira)}
+        <div class="galeri-sag">
+          <div class="tarus-toolbar-search">
+            <svg class="tarus-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" class="tarus-toolbar-input tarus-toolbar-input-with-icon tarus-toolbar-input-with-clear" id="galeriAra" placeholder="Tasarımlarda ara" aria-label="Başlık, açıklama ya da etikette ara" title="Başlık, açıklama ya da etikette ara" autocomplete="off" maxlength="80">
+            <button type="button" class="tarus-toolbar-search-clear" id="galeriAraTemizle" aria-label="Aramayı temizle" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+          </div>
+          ${segment('sira', [['yeni', 'En yeni'], ['begeni', 'En beğenilen']], sira)}
+        </div>
       </div>
+      <div class="galeri-etiketler suzgec" id="galeriEtiketler" role="group" aria-label="Etikete göre süz" hidden></div>
       <div class="galeri-izgara" id="galeriListe"></div>
       <div class="galeri-alt"><button class="dugme" id="galeriDaha" hidden>Daha fazla göster</button></div>`;
     kutu.hidden = false;
@@ -258,12 +319,31 @@
     ['tur', 'sira'].forEach(ad => kutu.querySelectorAll(`[data-${ad}]`).forEach(b => b.onclick = () => {
       if (ad === 'tur') tur = b.dataset.tur; else sira = b.dataset.sira;
       kutu.querySelectorAll(`[data-${ad}]`).forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });
+      if (ad === 'tur') etiketleriYukle();
       yukle(true);
     }));
+    // Arama: yazmayı bırakınca (300 ms) sunucuya sorulur
+    const ara = kutu.querySelector('#galeriAra'), araTemizle = kutu.querySelector('#galeriAraTemizle');
+    let araZaman = null;
+    ara.oninput = () => {
+      clearTimeout(araZaman);
+      araTemizle.hidden = !ara.value;
+      const once = q.trim(); q = ara.value;
+      if (q.trim() !== once) araZaman = setTimeout(() => yukle(true), 300);
+    };
+    araTemizle.onclick = () => {
+      clearTimeout(araZaman);
+      const once = q.trim(); ara.value = q = ''; araTemizle.hidden = true; ara.focus();
+      if (once) yukle(true);
+    };
+    kutu.querySelector('#galeriEtiketler').onclick = e => { const b = e.target.closest('[data-etiket-sec]'); if (b) etiketSec(b.dataset.etiketSec); };
     kutu.querySelector('#galeriDaha').onclick = () => yukle(false);
+    etiketleriYukle();
     kutu.querySelector('#galeriListe').addEventListener('click', async e => {
       const kartEl = e.target.closest('.galeri-kart'); if (!kartEl) return;
       const kod = kartEl.dataset.kod;
+      const etiketBtn = e.target.closest('[data-etiket-sec]');
+      if (etiketBtn){ etiketSec(etiketBtn.dataset.etiketSec); kutu.scrollTo?.({top: 0, behavior: 'smooth'}); return; }
       if (e.target.closest('[data-ac]')){ if (await tasarimAc(kod)) sayfaKapat(); return; }
       if (e.target.closest('[data-begen]')){
         const b = e.target.closest('[data-begen]');
@@ -312,6 +392,7 @@
       ${t.onizleme ? `<img class="galeri-buyuk" src="${esc(t.onizleme)}" alt="">` : ''}
       <p class="galeri-kunye">${t.sablon ? '<span class="galeri-rozet satir">Şablon</span> ' : ''}<b>${esc(t.yazar_adi || 'Adsız')}</b> · ${tarihYaz(t.olusturma)} · <span class="galeri-begeni" aria-label="${t.begeni_sayisi} beğeni">${kok.ikon('heart', 14)}${t.begeni_sayisi}</span></p>
       ${t.aciklama ? `<p class="galeri-aciklama">${esc(t.aciklama)}</p>` : ''}
+      ${t.etiketler?.length ? `<div class="galeri-etiketler">${t.etiketler.map(e => `<span class="galeri-etiket">#${esc(e)}</span>`).join('')}</div>` : ''}
       <p class="muted galeri-not">${sablon ? 'Şablon mevcut planınızın yerine açılır ve yeni tasarımınızın başlangıcı olur;' : 'Tasarım mevcut planınızın yerine açılır;'} «Geri al» (Ctrl Z) ile önceki planınıza dönebilirsiniz.${t.sahibi ? '' : ' Değişikliklerinizi «Paylaş» ile kendi tasarımınız olarak kaydedebilirsiniz.'}</p>`,
       dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: sablon ? 'Bu şablonla başla' : 'Planı aç', tur: 'birincil'}]});
     if (!tamam) return false;
@@ -319,7 +400,7 @@
     p.yukle(planTemizle(t.plan, {MATS: p.MATS, WALLS: p.WALLS, varsayilanMalzeme: id => p.ROOMS.find(r => r.id === id)?.mat || Object.keys(p.MATS)[0]}));
     // Şablondan başlanınca başlık boş: Paylaş yeni tasarım olarak kaydeder (kaynak = şablon)
     yaz(ACIK, sablon ? {kod: t.kod, baslik: '', kaynakBaslik: t.baslik}
-                     : {kod: t.kod, baslik: t.baslik, yazar_adi: t.yazar_adi, aciklama: t.aciklama, sablon: t.sablon});
+                     : {kod: t.kod, baslik: t.baslik, yazar_adi: t.yazar_adi, aciklama: t.aciklama, sablon: t.sablon, etiketler: t.etiketler || []});
     p.baslik(sablon ? `«${t.baslik}» şablonundan` : t.baslik);
     return true;
   }

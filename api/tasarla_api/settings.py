@@ -63,6 +63,9 @@ USE_TZ = True
 # Önizleme görselleri: kalıcı birimde, nginx /api/medya/ altından doğrudan verir.
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", str(BASE_DIR / "medya"))
 MEDIA_URL = "/api/medya/"
+# Bağlantı önizlemesi (Open Graph) mutlak adresleri: görsel ve sayfa adresi buna göre yazılır
+# (galeri/meta.py). Önizleme görselleri /api/medya/ altından girişsiz açılır.
+SITE_URL = os.environ.get("TASARLA_SITE_URL", "https://tasarla.tarus.tr").rstrip("/")
 # Gövde: plan JSON'u (≤ 256 KB) + base64 önizleme (≤ 2 MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024
 

@@ -2,6 +2,7 @@ import base64
 import io
 import shutil
 import tempfile
+from pathlib import Path
 from unittest import mock
 
 from django.core.cache import cache
@@ -226,3 +227,138 @@ class TasarimTestleri(TestCase):
             self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION="Bearer q.w.e").status_code, 403)
         self.assertFalse(self.c.get("/api/yonetici/").data["yonetici"])
         self.assertTrue(Tasarim.objects.filter(kod=kod).exists())
+
+
+@override_settings(MEDIA_ROOT=GECICI_MEDYA, MODERASYON_TOKEN="mod-anahtar")
+class AramaVeEtiketTestleri(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.c = APIClient()
+
+    def kaydet(self, **ek):
+        govde = {"baslik": "Salonum", "plan": plan(), **ek}
+        return self.c.post("/api/tasarimlar/", govde, format="json")
+
+    def kodlar(self, sorgu):
+        return [t["kod"] for t in self.c.get(f"/api/galeri/{sorgu}").data["sonuclar"]]
+
+    def test_etiketler_temizlenir_ve_doner(self):
+        y = self.kaydet(etiketler=["  Salon ", "#İskandinav", "salon", "Işıklı   Mutfak", ""])
+        self.assertEqual(y.status_code, 201, y.content)
+        self.assertEqual(y.data["etiketler"], ["iskandinav", "salon", "ışıklı mutfak"])
+        self.assertEqual(self.c.get(f"/api/tasarimlar/{y.data['kod']}/").data["etiketler"],
+                         ["iskandinav", "salon", "ışıklı mutfak"])
+        # virgüllü metin de kabul edilir
+        self.assertEqual(self.kaydet(etiketler="banyo, küçük ev").data["etiketler"], ["banyo", "küçük ev"])
+
+    def test_gecersiz_etiket_reddedilir(self):
+        for kotu in (["a" * 25], ["<script>"], ["a_b"], [1], ["a", "b", "c", "d", "e", "f"], {"a": 1}):
+            self.assertEqual(self.kaydet(etiketler=kotu).status_code, 400, kotu)
+        self.assertEqual(Tasarim.objects.count(), 0)
+
+    def test_guncellemede_etiket_verilmezse_korunur_verilirse_degisir(self):
+        y = self.kaydet(etiketler=["salon"])
+        kod, anahtar = y.data["kod"], y.data["anahtar"]
+        g = self.c.put(f"/api/tasarimlar/{kod}/", {"baslik": "Yeni", "plan": plan()}, format="json", HTTP_X_TASARLA_ANAHTAR=anahtar)
+        self.assertEqual(g.data["etiketler"], ["salon"])
+        g = self.c.put(f"/api/tasarimlar/{kod}/", {"baslik": "Yeni", "plan": plan(), "etiketler": ["mutfak"]}, format="json",
+                       HTTP_X_TASARLA_ANAHTAR=anahtar)
+        self.assertEqual(g.data["etiketler"], ["mutfak"])
+        g = self.c.put(f"/api/tasarimlar/{kod}/", {"baslik": "Yeni", "plan": plan(), "etiketler": []}, format="json",
+                       HTTP_X_TASARLA_ANAHTAR=anahtar)
+        self.assertEqual(g.data["etiketler"], [])
+        # anahtarsız etiket değişikliği yok
+        self.assertEqual(self.c.put(f"/api/tasarimlar/{kod}/", {"baslik": "X", "plan": plan(), "etiketler": ["spam"]},
+                                    format="json").status_code, 403)
+
+    def test_arama_baslik_aciklama_ve_etiket(self):
+        a = self.kaydet(baslik="Ferah salon", aciklama="Güneyde").data["kod"]
+        b = self.kaydet(baslik="Yatak odası", aciklama="Çalışma köşeli, ferah").data["kod"]
+        c = self.kaydet(baslik="Mutfak", etiketler=["şık mutfak"]).data["kod"]
+        self.assertEqual(self.kodlar("?q=ferah"), [b, a])
+        self.assertEqual(self.kodlar("?q=FERAH"), [b, a])
+        self.assertEqual(self.c.get("/api/galeri/", {"q": "Çalışma"}).data["toplam"], 1)
+        self.assertEqual([t["kod"] for t in self.c.get("/api/galeri/", {"q": "çalışma"}).data["sonuclar"]], [b])
+        self.assertEqual([t["kod"] for t in self.c.get("/api/galeri/", {"q": "ŞIK"}).data["sonuclar"]], [c])
+        self.assertEqual(self.kodlar("?q=yok-boyle-bir-sey"), [])
+        self.assertEqual(len(self.kodlar("?q=")), 3)
+        self.assertEqual(self.c.get("/api/galeri/?q=ferah").data["toplam"], 2)
+
+    def test_etiket_suzgeci_tur_ve_arama_ile_birlikte(self):
+        a = self.kaydet(baslik="Kuzey", etiketler=["salon"]).data["kod"]
+        b = self.kaydet(baslik="Güney", etiketler=["salon", "mutfak"], sablon=True).data["kod"]
+        self.kaydet(baslik="Doğu", etiketler=["mutfak"])
+        self.assertEqual(self.kodlar("?etiket=salon"), [b, a])
+        self.assertEqual(self.kodlar("?etiket=Salon"), [b, a])
+        self.assertEqual(self.kodlar("?etiket=salon&tur=sablon"), [b])
+        self.assertEqual(self.kodlar("?etiket=salon&q=kuzey"), [a])
+        self.assertEqual(self.kodlar("?etiket=bilinmeyen"), [])
+
+    def test_populer_etiketler_gizli_ve_galeri_disi_sayilmaz(self):
+        self.kaydet(etiketler=["salon", "mutfak"])
+        self.kaydet(etiketler=["salon"])
+        g = self.kaydet(etiketler=["gizli etiket"]).data["kod"]
+        Tasarim.objects.filter(kod=g).update(gizli=True)
+        d = self.kaydet(etiketler=["düşen"]).data["kod"]
+        Tasarim.objects.filter(kod=d).update(galeride=False)
+        self.kaydet(etiketler=["sablonluk"], sablon=True)
+        y = self.c.get("/api/etiketler/").data["etiketler"]
+        self.assertEqual(y, [{"ad": "salon", "sayi": 2}, {"ad": "mutfak", "sayi": 1}, {"ad": "sablonluk", "sayi": 1}])
+        self.assertEqual(self.c.get("/api/etiketler/?tur=sablon").data["etiketler"], [{"ad": "sablonluk", "sayi": 1}])
+
+    def test_moderasyon_arama_ve_etiketle_degismez(self):
+        kod = self.kaydet(baslik="Ferah", etiketler=["salon"]).data["kod"]
+        self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/?q=ferah").status_code, 403)
+        self.assertEqual(self.c.get("/api/galeri/?tur=inceleme&q=ferah").status_code, 403)
+        self.assertEqual(self.c.delete(f"/api/tasarimlar/{kod}/", HTTP_AUTHORIZATION="Bearer mod-anahtar").status_code, 204)
+
+
+@override_settings(MEDIA_ROOT=GECICI_MEDYA, SITE_URL="https://tasarla.tarus.tr")
+class PaylasimMetaTestleri(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.c = APIClient()
+
+    def meta(self, t):
+        y = self.c.get("/api/paylasim-meta/", {"t": t})
+        self.assertEqual(y.status_code, 200)
+        self.assertTrue(y["Content-Type"].startswith("text/html"))
+        return y.content.decode()
+
+    def test_tasarim_icin_baslik_aciklama_ve_mutlak_https_gorsel(self):
+        y = self.c.post("/api/tasarimlar/", {"baslik": "Ferah <salon>", "aciklama": 'Güney cepheli "aydınlık" salon',
+                                             "plan": plan(), "onizleme": png((120, 90)), "etiketler": ["salon"]}, format="json")
+        kod = y.data["kod"]
+        h = self.meta(kod)
+        self.assertIn('<meta property="og:title" content="Ferah &lt;salon&gt; · tarus Tasarla">', h)
+        self.assertIn('content="Güney cepheli &quot;aydınlık&quot; salon · salon"', h)
+        self.assertIn(f'<meta property="og:url" content="https://tasarla.tarus.tr/?t={kod}">', h)
+        self.assertRegex(h, rf'<meta property="og:image" content="https://tasarla\.tarus\.tr/api/medya/onizleme/{kod}\.webp\?v=\d+">')
+        self.assertIn('<meta property="og:image:width" content="120">', h)
+        self.assertIn('<meta name="twitter:card" content="summary_large_image">', h)
+        self.assertNotIn("<salon>", h)
+        # Görsel adresi girişsiz açılan medya yolunda (nginx /api/medya/); dosya diskte var
+        t = Tasarim.objects.get(kod=kod)
+        self.assertTrue((Path(GECICI_MEDYA) / t.onizleme).exists())
+
+    def test_aciklamasiz_ve_gorselsiz_tasarim(self):
+        kod = self.c.post("/api/tasarimlar/", {"baslik": "Plan", "yazar_adi": "Ayşe", "plan": plan()}, format="json").data["kod"]
+        h = self.meta(kod)
+        self.assertIn("Ayşe tarafından tarus Tasarla&#x27;da paylaşılan konut planı", h)
+        self.assertIn('content="https://tasarla.tarus.tr/public/icon-512.png"', h)
+        self.assertIn('<meta name="twitter:card" content="summary">', h)
+
+    def test_olmayan_gizli_ve_bozuk_kodda_varsayilan_meta(self):
+        kod = self.c.post("/api/tasarimlar/", {"baslik": "Gizli ad", "plan": plan()}, format="json").data["kod"]
+        Tasarim.objects.filter(kod=kod).update(gizli=True)
+        for t in (kod, "yokboylebir", "", "../etc", "<x>", "a" * 40):
+            h = self.meta(t)
+            self.assertIn('<meta property="og:title" content="tarus Tasarla">', h, t)
+            self.assertIn('<meta property="og:url" content="https://tasarla.tarus.tr/">', h, t)
+            self.assertNotIn("Gizli ad", h)
+
+    def test_meta_goruntulenme_saymaz_ve_yalniz_get(self):
+        kod = self.c.post("/api/tasarimlar/", {"baslik": "Plan", "plan": plan()}, format="json").data["kod"]
+        self.meta(kod)
+        self.assertEqual(Tasarim.objects.get(kod=kod).goruntulenme, 0)
+        self.assertEqual(self.c.post("/api/paylasim-meta/", {"t": kod}).status_code, 405)

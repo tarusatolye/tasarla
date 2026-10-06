@@ -11,18 +11,20 @@ from pathlib import Path
 from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
-from .dogrulama import onizleme_coz, plan_dogrula
-from .models import Begeni, Sikayet, Tasarim, anahtar_ozeti, ip_ozeti
+from .dogrulama import etiketleri_temizle, onizleme_coz, plan_dogrula, tr_buyuk, tr_kucuk
+from .models import Begeni, Etiket, Sikayet, Tasarim, anahtar_ozeti, ip_ozeti
 from .yonetici import yonetici_mi
 
 SAYFA_BOYU = 24
+ARAMA_EN_UZUN = 80
+POPULER_ETIKET_SAYISI = 20
 
 
 class KayitSiniri(AnonRateThrottle):
@@ -51,6 +53,7 @@ def _ozet(t):
     return {"kod": t.kod, "baslik": t.baslik, "yazar_adi": t.yazar_adi, "aciklama": t.aciklama,
             "onizleme": _onizleme_adresi(t), "begeni_sayisi": t.begeni_sayisi, "kopya_sayisi": t.kopya_sayisi,
             "goruntulenme": t.goruntulenme, "sablon": t.sablon,
+            "etiketler": [e.ad for e in t.etiketler.all()],
             "olusturma": t.olusturma.isoformat(), "guncelleme": t.guncelleme.isoformat()}
 
 
@@ -59,6 +62,10 @@ def _onizleme_yaz(t, baytlar):
     klasor.mkdir(parents=True, exist_ok=True)
     (klasor / f"{t.kod}.webp").write_bytes(baytlar)
     return f"onizleme/{t.kod}.webp"
+
+
+def _etiketleri_yaz(t, adlar):
+    t.etiketler.set([Etiket.objects.get_or_create(ad=ad)[0] for ad in adlar])
 
 
 def _onizleme_sil(t):
@@ -73,6 +80,8 @@ class TasarimGiris(serializers.Serializer):
     plan = serializers.JSONField()
     onizleme = serializers.CharField(required=False, allow_blank=True, default="")
     sablon = serializers.BooleanField(required=False, default=False)
+    # Verilmezse güncellemede mevcut etiketler korunur (eski istemci silmesin)
+    etiketler = serializers.JSONField(required=False)
     kaynak = serializers.CharField(max_length=16, required=False, allow_blank=True, default="")
     # Bal küpü: insanlar görmez, botlar doldurur
     web_sitesi = serializers.CharField(required=False, allow_blank=True, default="")
@@ -84,6 +93,9 @@ class TasarimGiris(serializers.Serializer):
 
     def validate_plan(self, deger):
         return plan_dogrula(deger)
+
+    def validate_etiketler(self, deger):
+        return etiketleri_temizle(deger)
 
     def validate_onizleme(self, deger):
         return onizleme_coz(deger) if deger else b""
@@ -112,6 +124,8 @@ class TasarimOlustur(APIView):
             if v["onizleme"]:
                 t.onizleme = _onizleme_yaz(t, v["onizleme"])
                 t.save(update_fields=["onizleme"])
+            if v.get("etiketler"):
+                _etiketleri_yaz(t, v["etiketler"])
             if kaynak:
                 Tasarim.objects.filter(pk=kaynak.pk).update(kopya_sayisi=F("kopya_sayisi") + 1)
         # Anahtar yalnız burada, bir kez döner; sunucuda özeti durur
@@ -146,7 +160,10 @@ class TasarimAyrinti(APIView):
         t.plan, t.sablon = v["plan"], v["sablon"]
         if v["onizleme"]:
             t.onizleme = _onizleme_yaz(t, v["onizleme"])
-        t.save()
+        with transaction.atomic():
+            t.save()
+            if "etiketler" in v:
+                _etiketleri_yaz(t, v["etiketler"])
         return Response(_ozet(t))
 
     def delete(self, request, kod):
@@ -172,6 +189,19 @@ class Galeri(APIView):
             qs = Tasarim.objects.filter(galeride=True, gizli=False)
             if tur == "sablon":
                 qs = qs.filter(sablon=True)
+        # Arama (başlık, açıklama, etiket) ve etiket süzgeci. SQLite'ta icontains yalnız ASCII
+        # harflerde büyük/küçük ayırmaz; Türkçe harfler için yazılışın küçük/büyük biçimleri de aranır.
+        q = " ".join(request.query_params.get("q", "").split())[:ARAMA_EN_UZUN]
+        if q:
+            kosul = Q()
+            for bicim in {q, tr_kucuk(q), tr_buyuk(q), tr_buyuk(q[:1]) + tr_kucuk(q[1:])}:
+                kosul |= Q(baslik__icontains=bicim) | Q(aciklama__icontains=bicim)
+            kosul |= Q(etiketler__ad__icontains=tr_kucuk(q))
+            qs = qs.filter(pk__in=Tasarim.objects.filter(kosul).values("pk"))
+        etiket = tr_kucuk(" ".join(request.query_params.get("etiket", "").strip().lstrip("#").split()))
+        if etiket:
+            qs = qs.filter(etiketler__ad=etiket)
+        qs = qs.prefetch_related("etiketler")
         if inceleme:
             qs = qs.order_by("-sikayet_sayisi", "-olusturma")
         else:
@@ -184,6 +214,19 @@ class Galeri(APIView):
         return Response({"sonuclar": [ozet(t) for t in sayfa],
                          "sonraki": sayfa.next_page_number() if sayfa.has_next() else None,
                          "toplam": sayfa.paginator.count})
+
+
+class Etiketler(APIView):
+    """GET → galeride en çok kullanılan etiketler (süzgeç düğmeleri için)."""
+
+    def get(self, request):
+        tur = request.query_params.get("tur")
+        kosul = Q(tasarimlar__galeride=True, tasarimlar__gizli=False)
+        if tur == "sablon":
+            kosul &= Q(tasarimlar__sablon=True)
+        etiketler = (Etiket.objects.annotate(sayi=Count("tasarimlar", filter=kosul)).filter(sayi__gt=0)
+                     .order_by("-sayi", "ad")[:POPULER_ETIKET_SAYISI])
+        return Response({"etiketler": [{"ad": e.ad, "sayi": e.sayi} for e in etiketler]})
 
 
 class Begen(APIView):

@@ -58,6 +58,7 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    | `TASARLA_YONETICI_ROLLERI` | (varsayılan `SUPERADMIN`) Pusula rolü bu listedeyse Tasarla yöneticisidir |
    | `PUSULA_URL` | (varsayılan `https://pusula.tarus.tr`) yönetici rolü `/auth/me/` ile buradan sorulur |
    | `DJANGO_ALLOWED_HOSTS` | (varsayılan `tasarla.tarus.tr`) |
+   | `TASARLA_SITE_URL` | (varsayılan `https://tasarla.tarus.tr`) bağlantı önizleme kartındaki sayfa ve görsel adresleri bununla mutlak yazılır (0.1.4) |
 
 4. **Kalıcı birimler**: `medya` (önizleme görselleri, web salt okunur bağlar) ve `veri`
    (SQLite kullanılıyorsa). Coolify'ın yedeğine eklenmeli; PostgreSQL'in yedeği kendi kaynağında.
@@ -82,6 +83,21 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    ```
    3 farklı ziyaretçiden şikâyet alan tasarım kendiliğinden galeriden düşer (bağlantısı açık kalır).
    Cloudflare "Only Turkey Access" istisnası `/api/` yollarını da kapsamalı (Tasarla zaten istisnada).
+7. **Bağlantı önizlemesi (Open Graph, 0.1.4)** — `/?t=<kod>` isteğinde nginx, index.html'i SSI ile
+   işler: `<head>`'deki blok iç konum `/_paylasim-meta` üzerinden `tasarla-api`'nin
+   `/api/paylasim-meta/?t=<kod>` ucunu çağırır ve tasarımın `og:title` / `og:description` /
+   `og:image` (önizleme görselinin mutlak https adresi) etiketlerini yazar. Tasarım yoksa ya da gizliyse
+   varsayılan kart döner; api yoksa / hata verirse blok boş kalır, sayfa yine açılır. Ek ayar yok
+   (`TASARLA_SITE_URL` varsayılanı yeterli); migration `0002_etiketler` açılışta kendiliğinden uygulanır.
+   Doğrulama:
+   ```bash
+   curl -s 'https://tasarla.tarus.tr/?t=<kod>' | grep -o '<meta property="og:[a-z:]*" content="[^"]*"'
+   curl -sI 'https://tasarla.tarus.tr/api/medya/onizleme/<kod>.webp' | head -1     # 200, girişsiz
+   curl -s  'https://tasarla.tarus.tr/' | grep -c 'og:title'                       # 1 (varsayılan kart)
+   ```
+   Kartı görmek için bağlantıyı WhatsApp / Telegram'a yapıştır ya da Facebook Sharing Debugger'da
+   «Scrape Again» (önbellek eski kartı tutabilir). Cloudflare HTML'i önbelleğe almamalı (varsayılan
+   davranış; "Cache Everything" kuralı varsa `?t=` sorgusu önbellek anahtarında kalmalı).
 
 ## 3. Yayın sonrası doğrulama
 

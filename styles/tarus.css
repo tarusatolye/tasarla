@@ -429,6 +429,15 @@
 :is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(svg, span, div, p) {
   color: var(--accent) !important;
 }
+/* Sayaç rozeti (okunmamış sayısı vb.) dolu vurgu zeminlidir: yukarıdaki «etkin
+   öğenin içi vurgu rengi» kuralı rakamı zeminle aynı renge boyuyordu (Posta
+   Yıldızlı / hesap rozeti, 2026-10-06). `.tarus-sayac` sınıflı rozet ve renkli
+   zemindeki baş harf avatarı (`.tarus-avatar-harf`) beyaz kalır;
+   özgüllük (0,4,0) yukarıdaki (0,3,1) kurallarını ve tarus-bilesen.css'tekini geçer. */
+:is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac, .tarus-avatar-harf):is(.tarus-sayac, .tarus-avatar-harf),
+:is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac, .tarus-avatar-harf) {
+  color: #fff !important;
+}
 
 /* ── Bildirim penceresi (components/NotificationBell.tsx) ─────────────────
    Görünüm Pusula'nınki (kullanıcı kararı 2026-09-29); değerler Pusula'da

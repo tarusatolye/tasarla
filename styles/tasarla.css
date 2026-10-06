@@ -364,3 +364,17 @@ footer b{color:var(--text);font-weight:600}
 /* Künye satırı: .ikon blok olduğu için kalp ile sayı ayrı satıra düşüyor, tarihten sonra «·» yalnız kalıyordu */
 .galeri-begeni{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;vertical-align:middle}
 .galeri-ust .tarus-toolbar-segment{flex-wrap:wrap}
+/* Arama ve etiketler (0.1.4) */
+.galeri-sag{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.galeri-sag .tarus-toolbar-input{width:100%}
+@media (max-width:640px){.galeri-sag{width:100%}}
+.galeri-etiketler{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.galeri-etiketler[hidden]{display:none}
+.galeri-etiketler.suzgec{gap:6px;margin:-4px 0 14px}
+.galeri-etiket{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;max-width:100%;padding:1px 8px;border-radius:999px;border:1px solid var(--bdr-2);font-size:var(--fs-xs);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.galeri-etiket{cursor:pointer}
+button.galeri-etiket:hover{color:var(--text);border-color:var(--bdr-3)}
+button.galeri-etiket:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.galeri-etiketler.suzgec .galeri-etiket{padding:3px 10px}
+.galeri-etiket.is-active{background:var(--accent);border-color:var(--accent);color:#fff}
+.galeri-kunye+.galeri-etiketler,.galeri-aciklama+.galeri-etiketler{margin:0 0 8px}

@@ -21,6 +21,17 @@ def ip_ozeti(ip: str) -> str:
     return hmac.new(settings.SECRET_KEY.encode(), ip.encode(), hashlib.sha256).hexdigest()
 
 
+class Etiket(models.Model):
+    """Galeri etiketi. Ad küçük harfle (Türkçe kurala göre) saklanır: dogrulama.etiketleri_temizle."""
+    ad = models.CharField(max_length=24, unique=True)
+
+    class Meta:
+        ordering = ["ad"]
+
+    def __str__(self):
+        return self.ad
+
+
 class Tasarim(models.Model):
     kod = models.CharField(max_length=16, unique=True, default=yeni_kod, editable=False)
     baslik = models.CharField(max_length=80)
@@ -35,6 +46,7 @@ class Tasarim(models.Model):
     sablon = models.BooleanField(default=False)
     # Moderasyon (yalnız yönetici): gizli tasarım listede görünmez, bağlantısı da açılmaz
     gizli = models.BooleanField(default=False)
+    etiketler = models.ManyToManyField(Etiket, blank=True, related_name="tasarimlar")
     kaynak = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="kopyalar")
     anahtar_ozeti = models.CharField(max_length=64)
     ip_ozeti = models.CharField(max_length=64, db_index=True)
