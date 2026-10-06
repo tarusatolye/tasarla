@@ -47,7 +47,7 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    (iç ad + port 5432). Boş bırakılırsa SQLite `veri` biriminde tutulur.
 2. **Uygulama kaynağı**: mevcut Tasarla kaynağında Build Pack → **Docker Compose**, dosya
    `docker-compose.yml`. Alan adı `https://tasarla.tarus.tr` yalnız **web** servisine,
-   iç port 80. `api` servisine alan adı verilmez.
+   iç port 80. `tasarla-api` servisine alan adı verilmez (ad bilerek Tasarla'ya özgü: Coolify ortak ağında `api` adı yonetim'e çözülür).
 3. **Ortam değişkenleri** (Coolify → Environment Variables):
 
    | Değişken | Değer |
@@ -72,7 +72,7 @@ yayınında uygulama eskisi gibi çalışır; `/api/saglik/` 502 döndüğü iç
    Kendi kartında Sil **yok** (kullanıcı kararı: silme yalnız yöneticide).
 6. **Moderasyon** — silme ve gizleme yalnız yöneticide. Tasarla'da kullanıcı menüsü → «Pusula ile
    bağlan» (SUPERADMIN hesabı) → Galeri: kartlarda Gizle / Sil, «İnceleme» sekmesinde şikâyet
-   alanlar. API rolü Pusula'nın `/auth/me/` ucuna sorar (api konteynerinin pusula.tarus.tr'ye
+   alanlar. API rolü Pusula'nın `/auth/me/` ucuna sorar (tasarla-api konteynerinin pusula.tarus.tr'ye
    ulaşabilmesi gerekir). Sunucudan / curl ile:
    ```bash
    curl -X POST https://tasarla.tarus.tr/api/moderasyon/<kod>/ \

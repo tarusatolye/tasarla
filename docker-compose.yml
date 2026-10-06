@@ -1,5 +1,7 @@
 # Coolify: "Docker Compose" kaynağı (docs/RUNBOOK-yayin.md → 2b). Alan adı (tasarla.tarus.tr)
-# yalnız `web`e verilir; `api` dışarı açılmaz, web ona "api" adıyla ulaşır.
+# yalnız `web`e verilir; `tasarla-api` dışarı açılmaz, web ona bu adla ulaşır.
+# Servis adı Tasarla'ya özgü: Coolify servisleri ortak «coolify» ağına da bağlar, «api» gibi
+# genel bir ad başka uygulamanın servisine çözülür (yonetim'in api'si, 2026-10-06).
 services:
   web:
     build:
@@ -8,13 +10,13 @@ services:
         SOURCE_COMMIT: ${SOURCE_COMMIT:-yerel}
     restart: unless-stopped
     depends_on:
-      - api
+      - tasarla-api
     volumes:
       - medya:/srv/medya:ro
     expose:
       - "80"
 
-  api:
+  tasarla-api:
     build: ./api
     restart: unless-stopped
     environment:
