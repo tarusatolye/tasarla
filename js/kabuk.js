@@ -1,6 +1,6 @@
 /* ============================================================
  *  tarus Tasarla — uygulama kabuğu
- *  tarus-standartlar.md'deki kabuk reçetelerinin düz JS karşılığı:
+ *  ozluk/tarus-kabuk/STANDARTLAR.md'deki kabuk reçetelerinin düz JS karşılığı:
  *  toast (sağ üst, 4 sn), tarusDialog (Esc, odak tuzağı, odak geri dönüşü),
  *  açılır menüler, tema seçici, Hakkında penceresi, Pusula oturumu ve
  *  hata bildirimi köprüsü. "Pusula'ya aktar" penceresi (YH13) de burada.
