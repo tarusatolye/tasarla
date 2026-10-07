@@ -289,6 +289,18 @@ function apiTaklidi(){
     const json = (status, body) => route.fulfill({status, contentType: 'application/json', body: JSON.stringify(body)});
     if (yol === '/api/saglik/') return json(200, {ok: true});
     if (yol === '/api/yonetici/') return json(200, {yonetici: !!yetki});
+    if (yol === '/api/galeri/' && u.searchParams.get('tur') === 'inceleme'){
+      if (!yetki) return json(403, {detail: 'Yetki yok.'});
+      const {plan, ...t} = tasarimlar.hazir1;
+      return json(200, {sonuclar: [{...t, sikayet_sayisi: 3, galeride: false, sikayetler: {
+        turler: [{tur: 'spam', etiket: 'Reklam / istenmeyen içerik', sayi: 2}, {tur: 'diger', etiket: 'Diğer', sayi: 1}],
+        aciklamalar: [{tur: 'spam', neden: 'reklam bağlantısı', tarih: '2026-10-07T09:00:00+03:00'}]}}], sonraki: null, toplam: 1});
+    }
+    if (/^\/api\/tasarimlar\/[^/]+\/sikayet\/$/.test(yol)) return json(201, {detail: 'Bildiriminiz alındı. Teşekkürler.'});
+    if (yol.startsWith('/api/moderasyon/')){
+      if (!yetki) return json(403, {detail: 'Yetki yok.'});
+      return json(200, {kod: yol.split('/')[3], sikayet_sayisi: 0});
+    }
     if (yol === '/api/galeri/'){
       const tur = u.searchParams.get('tur'), q = (u.searchParams.get('q') || '').toLocaleLowerCase('tr-TR'), etiket = u.searchParams.get('etiket');
       const liste = Object.values(tasarimlar).filter(t => tur !== 'sablon' || t.sablon)
@@ -495,6 +507,44 @@ test('galeri: yönetici (Pusula bağlı) Sil ve Gizle görür, istekler Pusula b
   const sil = api.istekler.find(i => i.yontem === 'DELETE');
   assert.equal(sil.yol, '/api/tasarimlar/hazir1/');
   assert.equal(sil.yetki, `Bearer ${JWT}`);
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: ziyaretçi şikâyette neden türü seçer, açıklama isteğe bağlı', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({api: api.isleyici});
+  await hizliBakisAc(sayfa);
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-sikayet]');
+  await sayfa.waitForSelector('[data-sikayet-tur="uygunsuz"].is-active');
+  await sayfa.click('[data-sikayet-tur="telif"]');
+  assert.equal(await sayfa.getAttribute('[data-sikayet-tur="telif"]', 'aria-checked'), 'true');
+  assert.equal(await sayfa.locator('[data-sikayet-tur].is-active').count(), 1);
+  await sayfa.fill('#gNeden', 'Benim planım');
+  await sayfa.click('.tarus-dialog-footer .tehlike');
+  await sayfa.waitForFunction(() => document.body.textContent.includes('Bildiriminiz alındı'));
+  const s = api.istekler.find(i => i.yol === '/api/tasarimlar/hazir1/sikayet/');
+  assert.deepEqual(s.govde, {tur: 'telif', neden: 'Benim planım'});
+  assert.deepEqual(hatalar, []);
+  await ctx.close();
+});
+
+test('galeri: yönetici İnceleme sekmesinde şikâyet nedenlerini görür ve yok sayar', async () => {
+  const api = apiTaklidi();
+  const {ctx, sayfa, hatalar} = await sayfaAc({sso: true, api: api.isleyici});
+  await sayfa.waitForFunction(() => document.querySelector('#kAd').textContent === 'Emre Yıldırım');
+  await hizliBakisAc(sayfa);
+  await sayfa.click('[data-tur="inceleme"]');
+  await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"] .galeri-sikayet');
+  const ozet = await sayfa.textContent('.galeri-kart[data-kod="hazir1"] .galeri-sikayet');
+  assert.match(ozet, /Galeriden düştü · Reklam \/ istenmeyen içerik 2 · Diğer 1/);
+  assert.match(ozet, /«reklam bağlantısı»/);
+  await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-yoksay]');
+  await sayfa.click('.tarus-dialog-footer .birincil');            // onay: Yok say
+  await sayfa.waitForSelector('.galeri-kart[data-kod="hazir1"]', {state: 'detached'});
+  const mod = api.istekler.find(i => i.yol === '/api/moderasyon/hazir1/');
+  assert.deepEqual(mod.govde, {sikayetleri_temizle: true, galeride: true});
+  assert.equal(mod.yetki, `Bearer ${JWT}`);
   assert.deepEqual(hatalar, []);
   await ctx.close();
 });

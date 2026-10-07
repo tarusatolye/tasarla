@@ -2,9 +2,11 @@
  * ozluk/surum-notlari/surum-notlari-tasarla.md. Uygulama içi not en çok 3 cümle.
  * 2026-10-04: numaralar 0.0.1'den yeniden düzenlendi (1.0.0-1.0.2 -> 0.0.1-0.0.3). */
 (function (kok) {
-  const APP_VERSION = '0.1.5';
+  const APP_VERSION = '0.1.6';
   const ILK_YAYIN = '2 Ekim 2026';
   const SURUM_NOTLARI = [
+    {surum: '0.1.6', tarih: '7 Ekim 2026',
+      not: 'Bir tasarımı bildirirken nedenini (uygunsuz içerik, reklam, telif, kişisel bilgi, diğer) seçebiliyorsunuz. Yönetici İnceleme sekmesinde şikâyet nedenlerini ve açıklamaları görüyor, yersiz şikâyetleri yok sayıp tasarımı galeriye geri alabiliyor.'},
     {surum: '0.1.5', tarih: '6 Ekim 2026',
       not: 'Tasarla’nın işareti yenilendi: sekme ikonu, ana ekran ikonu, üst çubuk ve Hakkında’da onaylı tarus işaret setinden kiremit zemin üstünde beyaz plan, köşeler bütün tarus uygulamalarıyla aynı oranda.'},
     {surum: '0.1.4', tarih: '6 Ekim 2026',

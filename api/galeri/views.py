@@ -57,6 +57,22 @@ def _ozet(t):
             "olusturma": t.olusturma.isoformat(), "guncelleme": t.guncelleme.isoformat()}
 
 
+SIKAYET_ACIKLAMA_SAYISI = 5
+
+
+def _sikayet_ozeti(t):
+    """Moderasyon için: türe göre sayılar (çoktan aza) ve son açıklamalar (en çok 5, boşlar hariç)."""
+    sikayetler = sorted(t.sikayetler.all(), key=lambda s: s.tarih, reverse=True)
+    sayilar = {}
+    for s in sikayetler:
+        sayilar[s.tur] = sayilar.get(s.tur, 0) + 1
+    etiket = dict(Sikayet.Tur.choices)
+    return {"turler": [{"tur": tur, "etiket": etiket.get(tur, tur), "sayi": sayi}
+                       for tur, sayi in sorted(sayilar.items(), key=lambda x: (-x[1], x[0]))],
+            "aciklamalar": [{"tur": s.tur, "neden": s.neden, "tarih": s.tarih.isoformat()}
+                            for s in sikayetler if s.neden][:SIKAYET_ACIKLAMA_SAYISI]}
+
+
 def _onizleme_yaz(t, baytlar):
     klasor = Path(settings.MEDIA_ROOT) / "onizleme"
     klasor.mkdir(parents=True, exist_ok=True)
@@ -210,7 +226,10 @@ class Galeri(APIView):
             sayfa = Paginator(qs, SAYFA_BOYU).page(max(1, int(request.query_params.get("sayfa", "1"))))
         except (EmptyPage, ValueError):
             return Response({"sonuclar": [], "sonraki": None, "toplam": qs.count()})
-        ozet = (lambda t: {**_ozet(t), "sikayet_sayisi": t.sikayet_sayisi, "galeride": t.galeride}) if inceleme else _ozet
+        if inceleme:
+            qs = qs.prefetch_related("sikayetler")
+        ozet = (lambda t: {**_ozet(t), "sikayet_sayisi": t.sikayet_sayisi, "galeride": t.galeride,
+                           "sikayetler": _sikayet_ozeti(t)}) if inceleme else _ozet
         return Response({"sonuclar": [ozet(t) for t in sayfa],
                          "sonraki": sayfa.next_page_number() if sayfa.has_next() else None,
                          "toplam": sayfa.paginator.count})
@@ -249,10 +268,13 @@ class SikayetEt(APIView):
 
     def post(self, request, kod):
         t = get_object_or_404(Tasarim, kod=kod, gizli=False)
-        neden = str(request.data.get("neden", ""))[:200]
+        neden = " ".join(str(request.data.get("neden", "")).split())[:200]
+        tur = str(request.data.get("tur", ""))
+        if tur not in Sikayet.Tur.values:
+            tur = Sikayet.Tur.DIGER
         try:
             with transaction.atomic():
-                Sikayet.objects.create(tasarim=t, ip_ozeti=ip_ozeti(_ip(request)), neden=neden)
+                Sikayet.objects.create(tasarim=t, ip_ozeti=ip_ozeti(_ip(request)), tur=tur, neden=neden)
                 Tasarim.objects.filter(pk=t.pk).update(sikayet_sayisi=F("sikayet_sayisi") + 1)
         except IntegrityError:
             pass
@@ -271,17 +293,24 @@ class Yonetici(APIView):
 
 
 class Moderasyon(APIView):
-    """POST {gizli?: bool, galeride?: bool} — yalnız yönetici (Pusula rolü ya da moderasyon anahtarı)."""
+    """POST {gizli?: bool, galeride?: bool, sikayetleri_temizle?: bool} — yalnız yönetici
+    (Pusula rolü ya da moderasyon anahtarı). `sikayetleri_temizle`: şikâyetler yok sayılır
+    (kayıtlar silinir, sayaç sıfırlanır); İnceleme listesinden çıkar."""
 
     def post(self, request, kod):
         if not yonetici_mi(request):
             return Response({"detail": "Yetki yok."}, status=403)
         t = get_object_or_404(Tasarim, kod=kod)
         alanlar = []
-        for alan in ("gizli", "galeride"):
-            if alan in request.data:
-                setattr(t, alan, bool(request.data[alan]))
-                alanlar.append(alan)
-        if alanlar:
-            t.save(update_fields=alanlar)
+        with transaction.atomic():
+            for alan in ("gizli", "galeride"):
+                if alan in request.data:
+                    setattr(t, alan, bool(request.data[alan]))
+                    alanlar.append(alan)
+            if request.data.get("sikayetleri_temizle") is True:
+                Sikayet.objects.filter(tasarim=t).delete()
+                t.sikayet_sayisi = 0
+                alanlar.append("sikayet_sayisi")
+            if alanlar:
+                t.save(update_fields=alanlar)
         return Response({**_ozet(t), "gizli": t.gizli, "sikayet_sayisi": t.sikayet_sayisi})

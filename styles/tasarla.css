@@ -378,3 +378,8 @@ button.galeri-etiket:focus-visible{outline:2px solid var(--accent);outline-offse
 .galeri-etiketler.suzgec .galeri-etiket{padding:3px 10px}
 .galeri-etiket.is-active{background:var(--accent);border-color:var(--accent);color:#fff}
 .galeri-kunye+.galeri-etiketler,.galeri-aciklama+.galeri-etiketler{margin:0 0 8px}
+.galeri-etiketler.sikayet-turleri{margin:4px 0 12px}
+.galeri-sikayet{margin-top:6px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--danger) 8%,transparent);display:flex;flex-direction:column;gap:2px;min-width:0}
+.galeri-sikayet small{color:var(--text);font-size:var(--fs-xs)}
+.galeri-sikayet ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1px}
+.galeri-sikayet li{font-size:var(--fs-xs);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

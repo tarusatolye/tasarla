@@ -80,8 +80,17 @@ class Begeni(models.Model):
 
 
 class Sikayet(models.Model):
+    # Bildirim türü (0.1.6): moderasyonda nedenler türe göre sayılır; açıklama `neden`de.
+    class Tur(models.TextChoices):
+        UYGUNSUZ = "uygunsuz", "Uygunsuz içerik"
+        SPAM = "spam", "Reklam / istenmeyen içerik"
+        TELIF = "telif", "Başkasının tasarımı / telif"
+        KISISEL = "kisisel", "Kişisel bilgi içeriyor"
+        DIGER = "diger", "Diğer"
+
     tasarim = models.ForeignKey(Tasarim, on_delete=models.CASCADE, related_name="sikayetler")
     ip_ozeti = models.CharField(max_length=64)
+    tur = models.CharField(max_length=12, choices=Tur.choices, default=Tur.DIGER)
     neden = models.CharField(max_length=200, blank=True)
     tarih = models.DateTimeField(auto_now_add=True)
 

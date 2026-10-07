@@ -144,6 +144,30 @@ class TasarimTestleri(TestCase):
         self.assertEqual(t.sikayet_sayisi, 2)
         self.assertFalse(t.galeride)
 
+    def test_sikayet_turu_ve_moderasyon_ozeti(self):
+        kod = self.kaydet().data["kod"]
+        mod = {"HTTP_AUTHORIZATION": "Bearer mod-anahtar"}
+        self.c.post(f"/api/tasarimlar/{kod}/sikayet/", {"tur": "spam", "neden": "  reklam   bağlantısı "}, format="json")
+        self.c.post(f"/api/tasarimlar/{kod}/sikayet/", {"tur": "uydurma"}, format="json", HTTP_X_FORWARDED_FOR="10.0.0.7")
+        self.c.post(f"/api/tasarimlar/{kod}/sikayet/", {"tur": "spam"}, format="json", HTTP_X_FORWARDED_FOR="10.0.0.8")
+        t = self.c.get("/api/galeri/?tur=inceleme", **mod).data["sonuclar"][0]
+        self.assertEqual(t["sikayet_sayisi"], 3)
+        self.assertFalse(t["galeride"])
+        self.assertEqual([(x["tur"], x["sayi"]) for x in t["sikayetler"]["turler"]], [("spam", 2), ("diger", 1)])
+        self.assertEqual(t["sikayetler"]["turler"][0]["etiket"], "Reklam / istenmeyen içerik")
+        self.assertEqual([x["neden"] for x in t["sikayetler"]["aciklamalar"]], ["reklam bağlantısı"])
+
+        # Şikâyetleri yok say: kayıtlar silinir, sayaç sıfır, galeriye döner, inceleme listesinden çıkar
+        y = self.c.post(f"/api/moderasyon/{kod}/", {"sikayetleri_temizle": True, "galeride": True}, format="json", **mod)
+        self.assertEqual(y.status_code, 200)
+        self.assertEqual(y.data["sikayet_sayisi"], 0)
+        t = Tasarim.objects.get(kod=kod)
+        self.assertTrue(t.galeride)
+        self.assertEqual(t.sikayetler.count(), 0)
+        self.assertEqual(self.c.get("/api/galeri/?tur=inceleme", **mod).data["sonuclar"], [])
+        # Yalnız yönetici
+        self.assertEqual(self.c.post(f"/api/moderasyon/{kod}/", {"sikayetleri_temizle": True}, format="json").status_code, 403)
+
     def test_kopya_kaynagi_sayilir(self):
         a = self.kaydet().data["kod"]
         b = self.kaydet(kaynak=a).data["kod"]

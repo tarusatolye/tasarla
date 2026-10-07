@@ -210,15 +210,26 @@
         <b title="${esc(t.baslik)}">${esc(t.baslik)}</b>
         <small>${esc(t.yazar_adi || 'Adsız')} · ${tarihYaz(t.olusturma)}${t.sikayet_sayisi ? ` · ${t.sikayet_sayisi} şikâyet` : ''}</small>
         ${t.etiketler?.length ? `<div class="galeri-etiketler">${t.etiketler.map(e => `<button class="galeri-etiket" data-etiket-sec="${esc(e)}" title="«${esc(e)}» etiketli tasarımlar">#${esc(e)}</button>`).join('')}</div>` : ''}
+        ${t.sikayetler ? sikayetOzeti(t) : ''}
       </div>
       <div class="galeri-eylem">
         <button class="dugme kucuk" data-begen title="Beğen" aria-label="Beğen: ${t.begeni_sayisi}">${kok.ikon('heart', 14)}<span>${t.begeni_sayisi}</span></button>
         <button class="dugme kucuk birincil" data-ac>${t.sablon ? 'Kullan' : 'Aç'}</button>
-        ${yonetici ? `<button class="dugme kucuk" data-gizle title="Galeriden ve bağlantısından gizle" aria-label="Gizle">${kok.ikon('flag', 14)}</button>
+        ${yonetici ? `${t.sikayetler ? `<button class="dugme kucuk" data-yoksay title="Şikâyetleri yok say, galeriye geri al">Yok say</button>` : ''}
+                      <button class="dugme kucuk" data-gizle title="Galeriden ve bağlantısından gizle" aria-label="Gizle">${kok.ikon('flag', 14)}</button>
                       <button class="dugme kucuk tehlike" data-sil title="Tasarımı sil (yönetici)" aria-label="Tasarımı sil">${kok.ikon('trash', 14)}</button>`
                    : `<button class="dugme kucuk" data-sikayet title="Uygunsuz içerik bildir" aria-label="Uygunsuz içerik bildir">${kok.ikon('flag', 14)}</button>`}
       </div>
     </article>`;
+  }
+
+  // İnceleme (yönetici): şikâyetlerin türe göre sayısı, galeri durumu ve son açıklamalar
+  function sikayetOzeti(t){
+    const s = t.sikayetler;
+    return `<div class="galeri-sikayet">
+      <small>${t.galeride ? 'Galeride' : 'Galeriden düştü'} · ${s.turler.map(x => `${esc(x.etiket)} ${x.sayi}`).join(' · ')}</small>
+      ${s.aciklamalar.length ? `<ul>${s.aciklamalar.map(a => `<li title="${tarihYaz(a.tarih)}">«${esc(a.neden)}»</li>`).join('')}</ul>` : ''}
+    </div>`;
   }
 
   async function yoneticiMi(){
@@ -351,33 +362,51 @@
         catch(err){ K().toast(err.message, 'hata'); }
       }
       if (e.target.closest('[data-sikayet]')) sikayetEt(kod);
+      if (e.target.closest('[data-yoksay]') && await yoneticiIslem(kod, 'yoksay')) kartEl.remove();
       if (e.target.closest('[data-gizle]') && await yoneticiIslem(kod, 'gizle')) kartEl.remove();
       if (e.target.closest('[data-sil]') && await yoneticiIslem(kod, 'sil')) kartEl.remove();
     });
     yukle(true);
   }
 
+  // Sunucudaki Sikayet.Tur ile aynı değerler (api/galeri/models.py)
+  const SIKAYET_TURLERI = [['uygunsuz', 'Uygunsuz içerik'], ['spam', 'Reklam / istenmeyen içerik'],
+    ['telif', 'Başkasının tasarımı / telif'], ['kisisel', 'Kişisel bilgi içeriyor'], ['diger', 'Diğer']];
+
   async function sikayetEt(kod){
-    const neden = await K().dialog({baslik: 'Uygunsuz içerik bildir', genislik: 'dar', govde: `
+    const sonuc = await K().dialog({baslik: 'Uygunsuz içerik bildir', genislik: 'dar', govde: `
       <p>Bu tasarımı neden bildiriyorsunuz? Birkaç bildirim alan tasarım galeriden kaldırılır ve yönetici inceler.</p>
-      <label class="form full">Neden <small>(isteğe bağlı)</small><input id="gNeden" maxlength="200"></label>`,
-      dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: 'Bildir', tur: 'tehlike', kapatmaz: true, tikla: (b, kapat) => kapat($('#gNeden').value || '-')}]});
-    if (neden === null) return;
-    try { await istek(`/tasarimlar/${kod}/sikayet/`, {yontem: 'POST', govde: {neden: neden === '-' ? '' : neden}}); K().toast('Bildiriminiz alındı. Teşekkürler.', 'basari'); }
+      <div class="galeri-etiketler suzgec sikayet-turleri" role="radiogroup" aria-label="Bildirim nedeni">
+        ${SIKAYET_TURLERI.map(([d, e], i) => `<button type="button" class="galeri-etiket${i === 0 ? ' is-active' : ''}" role="radio" aria-checked="${i === 0}" data-sikayet-tur="${d}">${e}</button>`).join('')}
+      </div>
+      <div class="form"><label class="full">Açıklama (isteğe bağlı)<input id="gNeden" maxlength="200"></label></div>`,
+      acilis: kutu => {
+        kutu.querySelector('.sikayet-turleri').onclick = e => {
+          const b = e.target.closest('[data-sikayet-tur]'); if (!b) return;
+          kutu.querySelectorAll('[data-sikayet-tur]').forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-checked', String(x === b)); });
+        };
+      },
+      dugmeler: [{etiket: 'Vazgeç', deger: null}, {etiket: 'Bildir', tur: 'tehlike', kapatmaz: true, tikla: (b, kapat) =>
+        kapat({tur: $('[data-sikayet-tur].is-active')?.dataset.sikayetTur || 'diger', neden: $('#gNeden').value})}]});
+    if (!sonuc) return;
+    try { await istek(`/tasarimlar/${kod}/sikayet/`, {yontem: 'POST', govde: sonuc}); K().toast('Bildiriminiz alındı. Teşekkürler.', 'basari'); }
     catch(e){ K().toast(e.message, 'hata'); }
   }
 
-  // Yalnız yönetici: sil (kalıcı) ya da gizle (listeden ve bağlantısından kalkar, veri durur)
+  // Yalnız yönetici: sil (kalıcı), gizle (listeden ve bağlantısından kalkar, veri durur) ya da
+  // yok say (şikâyetler silinir, tasarım galeriye döner)
   async function yoneticiIslem(kod, islem){
-    const sil = islem === 'sil';
+    const sil = islem === 'sil', yoksay = islem === 'yoksay';
     if (!await K().onayla(sil
       ? {baslik: 'Tasarımı sil', metin: 'Tasarım galeriden ve bağlantısından kalıcı olarak silinir. Bu işlem geri alınamaz.', onay: 'Sil', tehlike: true}
-      : {baslik: 'Tasarımı gizle', metin: 'Tasarım galeride görünmez, bağlantısı açılmaz. Veri silinmez.', onay: 'Gizle'})) return false;
+      : yoksay
+        ? {baslik: 'Şikâyetleri yok say', metin: 'Bu tasarımın şikâyetleri silinir ve tasarım galeride yeniden görünür.', onay: 'Yok say'}
+        : {baslik: 'Tasarımı gizle', metin: 'Tasarım galeride görünmez, bağlantısı açılmaz. Veri silinmez.', onay: 'Gizle'})) return false;
     try {
       if (sil) await istek(`/tasarimlar/${kod}/`, {yontem: 'DELETE', yetkili: true});
-      else await istek(`/moderasyon/${kod}/`, {yontem: 'POST', govde: {gizli: true}, yetkili: true});
-      const k = kayitlarim(); if (k[kod]){ delete k[kod]; yaz(KAYITLARIM, k); }
-      K().toast(sil ? 'Tasarım silindi' : 'Tasarım gizlendi', 'basari');
+      else await istek(`/moderasyon/${kod}/`, {yontem: 'POST', govde: yoksay ? {sikayetleri_temizle: true, galeride: true} : {gizli: true}, yetkili: true});
+      if (!yoksay){ const k = kayitlarim(); if (k[kod]){ delete k[kod]; yaz(KAYITLARIM, k); } }
+      K().toast(sil ? 'Tasarım silindi' : yoksay ? 'Şikâyetler yok sayıldı, tasarım galeride' : 'Tasarım gizlendi', 'basari');
       return true;
     } catch(e){ K().toast(e.message, 'hata'); return false; }
   }
