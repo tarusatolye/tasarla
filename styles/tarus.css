@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════
-   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.6.2)
+   tarus.css — tarus ekosistemi tema değişkenleri (ozluk/tarus-kabuk 0.7.0)
 
    Kaynak: Pusula Frontend/index.css (ekosistem standardı, 2026-09-28).
    Düz CSS'tir; Tailwind gerektirmez (Belge gibi statik kabuklar da kullanır).
@@ -96,6 +96,10 @@
   --r-xl:   14px;
   --r-2xl:  18px;
   --r-pill: 100px;
+  /* Marka plakası köşesi (2026-10-06, marka işaretleri onayı K1): kutunun
+     %18,75'i — 28 px → 5,25, 36 px → 6,75, 40 px → 7,5, 64 px → 12 px.
+     Kaynak: ozluk/tarus-kabuk/marka/marka.json (olcu.koseOrani). */
+  --r-marka: 18.75%;
 }
 .theme-modern {
   color-scheme: light;
@@ -376,7 +380,35 @@
   --ring:           inset 0 1px 0 rgba(255,255,255,.85);
 }
 
-/* ── Kategorik renkler (kabuk 0.6.2, tarus-standartlar §9 «Kategorik renkler») ──
+/* ── Anlamsal yüzey token'ları (kabuk 0.7.0, STANDARTLAR §9 «Yüzey katmanları») ──
+   Sorun (denetim 2026-10-07): aynı «hafif dolgu» işi için beş token vardı
+   (`--card-2`, `--ovl-1`, `--glass-bg`, `--ovl-2`, `--ovl-3`); Karanlık'ta hepsi
+   #161616–#1d1d1d arasında, her uygulama başka birini seçmişti (Belge oluştur
+   kartı `--card-2`, Çizge `--ovl-2`, kabuk `.glass` `--glass-bg`). Bileşen artık
+   ROLÜ yazar, değer buradan gelir:
+     --yuzey-zemin    sayfa kanvası (sidebar/header/main'in altı)       = --surface
+     --yuzey-panel    kenar çubuğu, üst çubuk, ana panel, pencere       = --card
+     --yuzey-kart     panel üstündeki kart (.glass, KPI, oluştur/dosya) = --glass-bg
+     --yuzey-girinti  bırakma alanı, boş durum, iç alan (girinti)       = --ovl-1
+     --yuzey-arac     toolbar şeridi, segment yuvası                    = --ovl-3
+   Ayrışma dolgunun yanında kenar ve gölgeyle kurulur (§9 «üç sinyal»): kart düz
+   `--bdr-2` + `--elev-1`, girinti 1.5 px kesik `--bdr-2` ve gölgesiz, araç şeridi
+   `--bdr-1` ve gölgesiz. Açık temalarda ve Orman/Günbatımı/Menekşe'de kart dolgusu
+   paneli verir (`--glass-bg` = kart rengi); ayrım kenar + gölgededir.
+   `--card-2` ve `--ovl-1..3` silinmedi (geriye uyum); yeni kodda yüzey için
+   bunlar değil yukarıdakiler yazılır. Tanım her tema seçicisinde: `var()` tema
+   sınıfının bulunduğu elemanda çözülür (§12b «köprü token'ı» tuzağı). */
+:root,
+.theme-karanlik, .theme-modern, .theme-sage, .theme-ocean,
+.theme-forest, .theme-sunset, .theme-violet, .theme-sand {
+  --yuzey-zemin:   var(--surface);
+  --yuzey-panel:   var(--card);
+  --yuzey-kart:    var(--glass-bg);
+  --yuzey-girinti: var(--ovl-1);
+  --yuzey-arac:    var(--ovl-3);
+}
+
+/* ── Kategorik renkler (kabuk 0.6.2, STANDARTLAR §9 «Kategorik renkler») ──
    Anlam taşımayan ayrım renkleri: etiket, kategori rozeti, takvim türü, modül
    işareti. Durum (başarı/uyarı/hata) için --success/--warning/--danger
    kullanılır, bunlar değil. Sıra: mor, çivit, menekşe, camgöbeği, pembe,
@@ -409,6 +441,18 @@
     box-shadow: var(--elev-1), var(--ring) !important;
   }
 }
+/* Kabuk paneli kenar rengi KARARI (kabuk 0.7.0, STANDARTLAR §12b): kenar çubuğu,
+   üst çubuk ve ana panel `--bdr-2`. Önceden Tailwind uygulamalarında JSX'teki
+   `border-default` (utilities katmanı, `--border` .07) yukarıdaki katmanlı kuralı
+   eziyor, yedi uygulama #222, altı uygulama #292929 çiziyordu (denetim 2026-10-07).
+   Bu kural KATMANSIZ: katmansız kural her katmanı yener, utility'den bağımsız tek
+   renk verir. Yalnız renk yazılır; kenarın varlığı ve kalınlığı uygulamada kalır.
+   Model/Çizge'nin kendi `.tarus-sidebar` / `.tarus-header` / `.tarus-main-card`
+   kuralları (`var(--border)`, tek sınıf) etiket+sınıf özgüllüğüyle (0,1,1) geçilir. */
+.tarus-surface-card.border-default,
+aside.tarus-sidebar, header.tarus-header, main.tarus-main-card {
+  border-color: var(--bdr-2);
+}
 
 /* Kenar çubuğu seçili satırı — Pusula standardı. Uygulamaların kendi eski
    kuralları (yalnız --elev-1, ışımasız vb.) ne olursa olsun aynı görünsün diye
@@ -433,9 +477,11 @@
    öğenin içi vurgu rengi» kuralı rakamı zeminle aynı renge boyuyordu (Posta
    Yıldızlı / hesap rozeti, 2026-10-06). `.tarus-sayac` sınıflı rozet ve renkli
    zemindeki baş harf avatarı (`.tarus-avatar-harf`) beyaz kalır;
-   özgüllük (0,4,0) yukarıdaki (0,3,1) kurallarını ve tarus-bilesen.css'tekini geçer. */
-:is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac, .tarus-avatar-harf):is(.tarus-sayac, .tarus-avatar-harf),
-:is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac, .tarus-avatar-harf) {
+   özgüllük (0,4,0) yukarıdaki (0,3,1) kurallarını ve tarus-bilesen.css'tekini geçer.
+   0.7.0: nötr sayaç (`.tarus-sayac.is-notr`, öğe sayısı; dolu zemini yok) hariç:
+   o, seçili öğede öğenin vurgu rengini alır (ölçü ve zemin tarus-bilesen.css). */
+:is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac:not(.is-notr), .tarus-avatar-harf):is(.tarus-sayac, .tarus-avatar-harf),
+:is(.theme-modern, .theme-sand, .theme-sage) :is(.tarus-sidebar-item, .tarus-nav-item):is(.is-active, .active) :is(.tarus-sayac:not(.is-notr), .tarus-avatar-harf) {
   color: #fff !important;
 }
 
@@ -594,7 +640,7 @@
 .tarus-bildirim .seviye-error { color: var(--danger); }
 
 
-/* ── Açık tema: solid zemin üstündeki yazı beyaz (tarus-standartlar §17b istisnası) ──
+/* ── Açık tema: solid zemin üstündeki yazı beyaz (STANDARTLAR §17b istisnası) ──
    2026-10-03'te Pusula `Frontend/index.css`'ten kabuğa alındı; uygulamalardaki kendi
    kopyaları (Sistem, Hesap, Arkiv: daha kısa liste) silinir. Açık temalarda
    `.text-white` metin rengine döner; solid renkli zemin İÇİNDEKİ metin ve ikonlar
@@ -650,7 +696,7 @@
   color: #ffffff !important;
 }
 
-/* ── Katman sırası (tarus-standartlar §14d, 2026-10-03) ──
+/* ── Katman sırası (STANDARTLAR §14d, 2026-10-03) ──
    z-index yalnız bu token'lardan gelir; `z-[...]` ile keyfi değer yazılmaz. */
 :root {
   --z-sticky: 10;

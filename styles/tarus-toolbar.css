@@ -2,7 +2,7 @@
    Pusula Frontend/index.css'ten kural kural çıkarıldı (2026-10-02). Uygulamalara
    styles/tarus-toolbar.css olarak bayt bayt kopyalanır, index.css'te tarus.css'in
    hemen ardından içe aktarılır; scripts/standart_denetim.py sapmayı yakalar.
-   Ölçü ve yerleşim kuralları: tarus-standartlar.md §tarusToolbar. Uygulamaya özel
+   Ölçü ve yerleşim kuralları: STANDARTLAR §tarusToolbar. Uygulamaya özel
    ek toolbar kuralı uygulamanın index.css'inde kalır; burada değiştirilmez. */
 
 @layer components {

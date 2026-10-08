@@ -16,15 +16,17 @@
 @layer base{
   button{background:transparent;background-image:none;border:0 solid;padding:0;color:inherit;font:inherit;cursor:pointer;line-height:inherit}
   input,textarea{color:inherit}
+  /* 0.1.7: katmansızken tarus-toolbar.css'in (@layer components) yazı ölçüsünü eziyordu
+     (toolbar araması/düğmeleri 13/400 çıkıyordu; reçete 14/500). STANDARTLAR §9 katman notu. */
+  button,input,select,textarea{font:inherit;color:inherit}
 }
 .tarus-toolbar-search-clear[hidden]{display:none}
 /* hidden özniteliği .dugme / .popup-oge gibi display veren sınıfları da gizler (Pusula düğmeleri yalnız bağlıyken). */
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;overscroll-behavior:none;touch-action:manipulation;
+html,body{margin:0;height:100%;background:var(--yuzey-zemin);color:var(--text);overflow:hidden;overscroll-behavior:none;touch-action:manipulation;
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
   font:var(--fs-md)/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-feature-settings:"tnum" 1,"zero" 1}
 body{transition:background-color .4s cubic-bezier(.4,0,.2,1),color .4s ease}
-button,input,select,textarea{font:inherit;color:inherit}
 .ikon{flex:none;display:block}
 
 /* ---------- Yerleşim: yüzen paneller (p-3 gap-3) ---------- */
@@ -32,7 +34,9 @@ button,input,select,textarea{font:inherit;color:inherit}
   padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea{-webkit-user-select:text;user-select:text}
-.kart{background:var(--card);border:1px solid var(--bdr-2);border-radius:14px;box-shadow:var(--elev-1),var(--ring)}
+/* Yüzen panel (üst çubuk, araç çubuğu, kenar panelleri, Hızlı Bakış): kabuk panel rolü
+   (STANDARTLAR §9 «Yüzey katmanları», §12b): zemin --yuzey-panel, kenar --bdr-2, --elev-1 + --ring. */
+.kart{background:var(--yuzey-panel);border:1px solid var(--bdr-2);border-radius:var(--r-xl);box-shadow:var(--elev-1),var(--ring)}
 
 /* ---------- Üst çubuk ---------- */
 .ust{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 12px 10px 14px}
@@ -90,7 +94,7 @@ aside.lib{grid-column:1;grid-row:3}
 aside.right{grid-column:3;grid-row:3}
 .lib-ara{position:sticky;top:0;z-index:2;background:var(--card);padding:10px 10px 6px}
 .lib-ara .tarus-toolbar-search{width:100%;max-width:100%;min-width:0}
-.lib h4{position:sticky;top:52px;z-index:1;background:var(--card);margin:0;padding:10px 14px 6px;font-size:var(--fs-xs);color:var(--muted);font-weight:700}
+.lib h4{position:sticky;top:52px;z-index:1;background:var(--yuzey-panel);margin:0;padding:10px 14px 6px;font-size:var(--fs-xs);color:var(--muted);font-weight:700}
 .lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px 6px}
 .lib-bos{padding:24px 16px;text-align:center;color:var(--muted)}
 .item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border:1px solid var(--bdr-2);text-align:center;
@@ -344,7 +348,11 @@ footer b{color:var(--text);font-weight:600}
 @media (max-width:640px){.hizli-bakis{padding:14px}}
 .galeri-ust{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .galeri-izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.galeri-kart{border:1px solid var(--bdr-2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}
+/* Galeri kartı panel üstündeki kart: kabuk `.glass` / `.tarus-dosya-karti` reçetesi (0.7.0; önceden
+   panel rengi ve 12 px köşe, gölgesiz). */
+.galeri-kart{border:1px solid var(--bdr-2);border-radius:var(--r-xl);overflow:hidden;display:flex;flex-direction:column;background:var(--yuzey-kart);
+  box-shadow:var(--elev-1),var(--ring);transition:border-color .15s ease,box-shadow .15s ease}
+.galeri-kart:hover{border-color:var(--bdr-3);box-shadow:var(--elev-2),var(--ring)}
 .galeri-gorsel{all:unset;cursor:pointer;aspect-ratio:4/3;background:#f7f4ee;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 .galeri-gorsel img{width:100%;height:100%;object-fit:cover}
 .galeri-gorsel:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
