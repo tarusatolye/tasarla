@@ -158,7 +158,7 @@
         <label class="full">Adınız <small>(isteğe bağlı, galeride görünür)</small><input id="gYazar" maxlength="60" value="${esc(acik?.yazar_adi || localStorage.getItem(YAZAR) || '')}"></label>
         <label class="full">Açıklama <small>(isteğe bağlı)</small><textarea id="gAciklama" maxlength="500" rows="3">${esc(benim ? acik.aciklama || '' : '')}</textarea></label>
         <label class="full">Etiketler <small>(isteğe bağlı, virgülle ayırın, en çok ${ETIKET_EN_FAZLA})</small><input id="gEtiketler" maxlength="160" autocomplete="off" value="${esc(benim ? (acik.etiketler || []).join(', ') : '')}" placeholder="Örn. salon, küçük ev, iskandinav"></label>
-        <label class="full onay"><input type="checkbox" id="gSablon" ${benim && acik.sablon ? 'checked' : ''}> Şablon olarak ekle <small>(başkaları yeni tasarıma bununla başlayabilir)</small></label>
+        <label class="full onay tarus-onay-etiket"><input type="checkbox" class="tarus-onay" id="gSablon" ${benim && acik.sablon ? 'checked' : ''}> Şablon olarak ekle <small>(başkaları yeni tasarıma bununla başlayabilir)</small></label>
         <input id="gWeb" class="bal-kupu" tabindex="-1" autocomplete="off" aria-hidden="true">
       </form>
       <p class="muted galeri-not">Tasarımlar galeride herkese açıktır. ${benim ? 'Bu tasarımı daha önce bu tarayıcıdan kaydettiniz; «Güncelle» aynı bağlantıyı korur.' : acik ? `«${esc(acik.baslik || acik.kaynakBaslik)}» üzerine kurduğunuz plan yeni bir tasarım olarak kaydedilir.` : 'Hesap gerekmez. Kayıttan sonra bağlantıyı paylaşabilirsiniz; tasarımı yalnız bu tarayıcıdan güncelleyebilirsiniz.'}</p>`;

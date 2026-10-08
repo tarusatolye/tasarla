@@ -116,7 +116,7 @@ footer{grid-row:4}
 .arac .tarus-toolbar-segment-button{gap:6px;display:inline-flex;align-items:center}
 .arac [hidden]{display:none!important}
 .arac .range{display:flex;align-items:center;gap:8px;padding:0 6px;color:var(--muted2);font-size:var(--fs-sm)}
-.arac .range input{width:96px;accent-color:var(--accent)}
+.arac .range input{width:96px} /* görünüm kabuk .tarus-kaydirici (TSR-14) */
 .arac .range span{font-variant-numeric:tabular-nums;color:var(--text);min-width:38px}
 body.m3d .only2d,body:not(.m3d) .only3d{display:none!important}
 .only2d,.only3d{animation:fadeIn .35s ease both}
@@ -391,7 +391,7 @@ footer b{color:var(--text);font-weight:600}
 .dugme.kucuk{height:30px;padding:0 9px;font-size:var(--fs-xs)}
 .dugme.kucuk.is-active{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 30%,transparent)}
 .galeri-form label.onay{flex-direction:row;align-items:center;gap:8px;color:var(--text);font-weight:500}
-.galeri-form label.onay input{width:auto;height:auto;margin:0}
+.galeri-form label.onay input{margin:0} /* boyut kabuk .tarus-onay (TSR-14) */
 .galeri-form small,.galeri-not{font-weight:400;color:var(--muted)}
 .galeri-not{font-size:var(--fs-xs);margin-top:12px}
 .bal-kupu{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}

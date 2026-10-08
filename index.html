@@ -38,10 +38,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
 <style>@layer base, components;</style>
-<link rel="stylesheet" href="styles/tarus.css?v=0.1.11">
-<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.11">
-<link rel="stylesheet" href="styles/tasarla.css?v=0.1.11">
-<script src="js/tema.js?v=0.1.11"></script>
+<link rel="stylesheet" href="styles/tarus.css?v=0.1.12">
+<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.12">
+<link rel="stylesheet" href="styles/tasarla.css?v=0.1.12">
+<script src="js/tema.js?v=0.1.12"></script>
 <script type="importmap">
 {"imports":{
   "three":"./vendor/three/three.module.min.js",
@@ -220,7 +220,7 @@
       <button class="tarus-toolbar-segment-button btn is-active" data-t="labels">Mahal adları</button>
       <button class="tarus-toolbar-segment-button btn" data-t="night">Gece</button>
     </div>
-    <div class="tarus-toolbar-segment only3d"><label class="range"><i data-ikon="sun"></i><input type="range" id="sun" min="7" max="18" step=".25" value="10" aria-label="Güneş saati"><span id="sunT">10:00</span></label></div>
+    <div class="tarus-toolbar-segment only3d"><label class="range"><i data-ikon="sun"></i><input type="range" class="tarus-kaydirici" id="sun" min="7" max="18" step=".25" value="10" aria-label="Güneş saati"><span id="sunT">10:00</span></label></div>
     <div class="spacer"></div>
     <button class="tarus-toolbar-icon-button" id="fullscreen" title="Tam ekran (Shift+F)" aria-label="Tam ekran"><i data-ikon="maximize"></i></button>
     <div class="menu" id="dosyaMenu">
@@ -291,12 +291,12 @@
   </footer>
 </div>
 <div id="tarus-toasts" aria-live="polite"></div>
-<script src="js/ikonlar.js?v=0.1.11"></script>
-<script src="js/surum.js?v=0.1.11"></script>
-<script src="js/kutuphane.js?v=0.1.11"></script>
-<script src="js/pusula-oturum.js?v=0.1.11"></script>
-<script src="js/pusula-aktar.js?v=0.1.11"></script>
-<script src="js/kabuk.js?v=0.1.11"></script>
+<script src="js/ikonlar.js?v=0.1.12"></script>
+<script src="js/surum.js?v=0.1.12"></script>
+<script src="js/kutuphane.js?v=0.1.12"></script>
+<script src="js/pusula-oturum.js?v=0.1.12"></script>
+<script src="js/pusula-aktar.js?v=0.1.12"></script>
+<script src="js/kabuk.js?v=0.1.12"></script>
 <script src="public/tarus-context-menu.js"></script>
 <script>
 /* ======================= Yardımcılar ======================= */
@@ -933,7 +933,7 @@ function furnPanel(f){
       <label>Merkez X (cm)<input type="number" id="fX" value="${cm(f.cx)}" step="1"></label>
       <label>Merkez Y (cm)<input type="number" id="fY" value="${cm(f.cy)}" step="1"></label>
       <label>Dönüş (°)<input type="number" id="fR" value="${f.rot}" step="15"></label>
-      <label>Renk<input type="color" id="fC" value="${f.color}"></label>
+      <label>Renk<input type="color" class="tarus-renk" id="fC" value="${f.color}"></label>
     </div>
     <div class="muted" style="margin-top:8px">Kapladığı alan ${fmtTR(f.w*f.d/1e6)} m²</div>
     <div class="actions">
@@ -1460,7 +1460,7 @@ fitView(); renderAll();
   hepsi();
 })();
 </script>
-<script src="js/galeri.js?v=0.1.11"></script>
+<script src="js/galeri.js?v=0.1.12"></script>
 <script type="module">
 /* ============================================================
  *  3B sahne (three.js) — 2B ile aynı state / ui'yi kullanır, geçişler animasyonludur:

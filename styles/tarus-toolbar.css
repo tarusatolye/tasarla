@@ -380,8 +380,9 @@
 
   /* Geçiş katmanı: eski sayfalardaki toolbar işaretlemeleri yeni sınıflara
      taşınana kadar yalnızca .tarus-toolbar bağlamında aynı optik sözleşmeyi
-     korur. Form/diğer sayfa butonlarını etkilemez. */
-  .tarus-toolbar :is(input, select):not(.tarus-toolbar-input) {
+     korur. Form/diğer sayfa butonlarını etkilemez. Kabuk onay kutusu, kaydırıcı ve
+     renk kutusu kendi ölçüsünü taşır (0.7.6; Tasarla güneş kaydırıcısı 36 px çıkıyordu). */
+  .tarus-toolbar :is(input, select):not(.tarus-toolbar-input):not(.tarus-kaydirici):not(.tarus-onay):not(.tarus-renk) {
     height: 36px;
     min-height: 36px;
     border-radius: var(--r-sm, 8px);
