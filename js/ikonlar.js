@@ -62,6 +62,6 @@
   kok.ikon = ikon;
   // HTML'de <i data-ikon="ad"></i> yer tutucuları açılışta SVG'ye çevrilir
   kok.ikonlariYerlestir = (kapsam = document) => kapsam.querySelectorAll('i[data-ikon]').forEach(el => {
-    el.outerHTML = ikon(el.dataset.ikon, +(el.dataset.boyut || 16));
+    el.outerHTML = ikon(el.dataset.ikon, +(el.dataset.boyut || 16), el.className);
   });
 })(window);

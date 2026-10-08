@@ -39,20 +39,47 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .kart{background:var(--yuzey-panel);border:1px solid var(--bdr-2);border-radius:var(--r-xl);box-shadow:var(--elev-1),var(--ring)}
 
 /* ---------- Üst çubuk ---------- */
-.ust{grid-column:1/-1;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 12px 10px 14px}
-.marka{display:flex;align-items:center;gap:12px;min-width:0}
+/* Kabuk üst çubuk ölçüsü (STANDARTLAR §12b, README «Üst çubuk standardı», TSR-10): 80 px,
+   ızgara [minmax(140px,1fr) minmax(200px,400px) auto], arama orta sütunda −16 px; başlık 24/700 */
+.ust{grid-column:1/-1;display:grid;grid-template-columns:minmax(140px,1fr) minmax(200px,400px) auto;align-items:center;gap:12px;
+  height:80px;padding:0 8px 0 12px}
+.ust>.tarus-ust-arama{grid-column:2;transform:translateX(-16px)}
+.ust>.tarus-ust-arama[hidden]{display:none}
+.ust-sag{grid-column:3;justify-self:end;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.marka{grid-column:1;display:flex;align-items:center;gap:12px;min-width:0}
 .marka img{width:40px;height:40px;border-radius:18.75%;flex:none}
-.marka-yazi{display:flex;flex-direction:column;line-height:1.2;min-width:0}
-.marka-yazi b{font-size:var(--fs-lg);font-weight:800;letter-spacing:-.01em}
-.marka-yazi b span{color:var(--brand-tasarla)}
-.marka-yazi small{color:var(--muted);font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marka-yazi{display:flex;flex-direction:column;min-width:0}
+.marka-yazi h1{margin:0;padding:2px 0;font-size:24px;font-weight:700;line-height:1.25;letter-spacing:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.marka-yazi h1 span{color:var(--brand-tasarla)}
+.marka-yazi small{color:var(--muted);font-size:var(--fs-sm);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .spacer{flex:1}
+/* Üst çubuk araması — kabuk tarus-bilesen.css .tarus-ust-arama (Tasarla o dosyayı yüklemiyor) */
+.tarus-ust-arama{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;max-width:400px;height:30px;padding:0 12px;
+  background:var(--ovl-2);color:var(--muted2);border:1px solid var(--bdr-2);border-radius:var(--r-xl,14px);transition:border-color .15s ease;cursor:text}
+.tarus-ust-arama:hover{border-color:var(--bdr-3)}
+.tarus-ust-arama:focus-within{border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+.tarus-ust-arama>svg{width:15px;height:15px;flex-shrink:0}
+.tarus-ust-arama input{flex:1;min-width:0;height:100%;margin:0;padding:0;border:0;outline:0;background:transparent;color:var(--text);
+  font:inherit;font-size:12px;line-height:16px;font-weight:500;letter-spacing:0}
+.tarus-ust-arama input::placeholder{color:var(--muted2);opacity:1}
+.tarus-ust-arama input::-webkit-search-cancel-button{display:none}
+/* Kullanıcı kartı — kabuk tarusKullanıcıKartı (STANDARTLAR §16): min. 56 px, avatar 48×48 r14 */
+.tarus-kullanici-karti{display:inline-flex;min-height:56px;align-items:center;justify-content:flex-start;gap:8px;padding:4px 12px 4px 4px;
+  border:1px solid var(--bdr-2);border-radius:var(--r-xl,14px);background:var(--ovl-2);color:var(--text);cursor:pointer;font:inherit;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.tarus-kullanici-karti:hover{background:var(--ovl-4);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.tarus-kullanici-karti.is-open{background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:var(--elev-1)}
+.tarus-kullanici-karti .avatar{width:48px;height:48px;flex:0 0 48px;border-radius:var(--r-xl,14px);border:1px solid var(--bdr-2);background:var(--ovl-2);color:var(--accent-lt);font-size:15px}
+.kart-yazi{display:flex;flex-direction:column;text-align:left;width:140px;min-width:0}
+.kart-yazi b{font-size:14px;line-height:20px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kart-yazi small{margin-top:6px;font-size:var(--fs-nano,10px);line-height:1;font-weight:500;color:var(--muted2);opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kart-ok{flex:0 0 14px;color:var(--muted2);transition:transform .15s ease,color .15s ease}
+.tarus-kullanici-karti.is-open .kart-ok{transform:rotate(180deg);color:var(--accent-lt)}
 .ust-tetik{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;min-width:36px;padding:0 10px;border-radius:8px;
   border:1px solid var(--bdr-2);background:var(--ovl-3);color:var(--muted2);cursor:pointer}
 .ust-tetik:hover{background:var(--ovl-4);color:var(--text)}
 .ust-tetik.is-open{background:color-mix(in srgb,var(--accent) 12%,var(--ovl-3));border-color:color-mix(in srgb,var(--accent) 45%,var(--bdr-2));color:var(--text)}
 .avatar{width:28px;height:28px;border-radius:8px;object-fit:cover;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-sm)}
-.kullanici-ad{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600;font-size:var(--fs-sm)}
 
 /* ---------- Açılır pencereler (tarus-popup) ---------- */
 .menu{position:relative}
@@ -326,11 +353,21 @@ footer b{color:var(--text);font-weight:600}
   aside.right{justify-self:end;transform:translateX(120%)}
   aside.open{transform:none;box-shadow:var(--elev-2),var(--ring)}
   .lib-grid{grid-template-columns:1fr 1fr 1fr}
-  .marka-yazi small,footer .only2d,.kullanici-ad{display:none!important}
+  .marka-yazi small,footer .only2d,.kart-yazi{display:none!important}
+  .ust{grid-template-columns:max-content minmax(120px,400px) auto}
+  .ust>.tarus-ust-arama{transform:none;justify-self:center}
 }
+/* Dar tablet: üst çubuk düğmeleri yalnız ikon, arama sütununa yer kalsın */
+@media (max-width:860px){.ust .aktar-yazi{display:none}}
 @media (max-width:640px){
   .app{gap:8px;padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
-  .ust{min-height:56px}
+  /* Telefonda üst çubuk tek satır (kart 56 px sığsın diye 64 px); arama yalnız Hızlı Bakış'ta,
+     ikinci satırda tam genişlik (Pusula telefon düzeni gibi) */
+  .ust{grid-template-columns:minmax(0,1fr) auto;height:auto;min-height:64px;padding:3px 3px 3px 10px;row-gap:6px}
+  .ust>.tarus-ust-arama{grid-column:1/-1;grid-row:2;max-width:none;margin:0 7px 5px 0;display:none}
+  .app.hb-acik .ust>.tarus-ust-arama:not([hidden]){display:flex}
+  .ust-sag{grid-column:2;grid-row:1;gap:6px}
+  .marka-yazi h1{font-size:var(--fs-lg);font-weight:800;line-height:1.2;white-space:normal}
   .aktar-yazi{display:none}
   /* Telefonda araç çubuğu tek satır, yatay kaydırılır; açılır menü taşabilsin diye Dosya en sağda sabit */
   .arac{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}

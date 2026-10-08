@@ -251,6 +251,21 @@
     b.title = acik ? 'Plan çizimine dön' : 'Herkesin paylaştığı tasarımlar ve şablonlar';
     b.setAttribute('aria-pressed', String(acik));
   }
+  // Üst çubuk araması (index.html #galeriAra): yazmayı bırakınca (300 ms) sunucuya sorulur;
+  // çizimdeyken yazılırsa Hızlı Bakış bu metinle açılır. Esc kutuyu temizler.
+  let aramaUygula = null;
+  function ustAramaBagla(){
+    const ara = $('#galeriAra'); if (!ara) return;
+    $('#ustArama').hidden = false;
+    let zaman = null;
+    let acilis = null;                            // galeriAc beklerken ikinci kez açılmasın
+    const uygula = () => { if (sayfaAcikMi()) aramaUygula?.(ara.value); else if (!acilis) acilis = galeriAc().finally(() => { acilis = null; }); };
+    ara.addEventListener('input', () => { clearTimeout(zaman); zaman = setTimeout(uygula, 300); });
+    ara.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && ara.value){ e.stopPropagation(); clearTimeout(zaman); ara.value = ''; if (sayfaAcikMi()) aramaUygula?.(''); }
+      if (e.key === 'Enter'){ clearTimeout(zaman); uygula(); }
+    });
+  }
   function sayfaKapat(){
     if (!sayfaEl()) return;
     sayfaEl().hidden = true;
@@ -265,7 +280,8 @@
     if (!el) return;
     if (sayfaAcikMi()) return sayfaKapat();
     yonetici = await yoneticiMi();
-    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = el, q = '', etiket = '', istekNo = 0;
+    // Arama üst çubukta (TSR-10, kabuk .tarus-ust-arama): açılışta kutudaki metinle başlar
+    let tur = 'tumu', sira = 'yeni', sonraki = 1, kutuEl = el, q = ($('#galeriAra')?.value || ''), etiket = '', istekNo = 0;
     const yukle = async (sifirla) => {
       const liste = kutuEl.querySelector('#galeriListe'), daha = kutuEl.querySelector('#galeriDaha');
       const no = ++istekNo;                       // yazarken eski yanıt yenisinin üstüne yazmasın
@@ -311,11 +327,6 @@
       <div class="galeri-ust">
         ${segment('tur', [['tumu', 'Tüm tasarımlar'], ['sablon', 'Şablonlar'], ...(yonetici ? [['inceleme', 'İnceleme']] : [])], tur)}
         <div class="galeri-sag">
-          <div class="tarus-toolbar-search">
-            <svg class="tarus-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="search" class="tarus-toolbar-input tarus-toolbar-input-with-icon tarus-toolbar-input-with-clear" id="galeriAra" placeholder="Tasarımlarda ara" aria-label="Başlık, açıklama ya da etikette ara" title="Başlık, açıklama ya da etikette ara" autocomplete="off" maxlength="80">
-            <button type="button" class="tarus-toolbar-search-clear" id="galeriAraTemizle" aria-label="Aramayı temizle" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-          </div>
           ${segment('sira', [['yeni', 'En yeni'], ['begeni', 'En beğenilen']], sira)}
         </div>
       </div>
@@ -331,20 +342,8 @@
       if (ad === 'tur') etiketleriYukle();
       yukle(true);
     }));
-    // Arama: yazmayı bırakınca (300 ms) sunucuya sorulur
-    const ara = kutu.querySelector('#galeriAra'), araTemizle = kutu.querySelector('#galeriAraTemizle');
-    let araZaman = null;
-    ara.oninput = () => {
-      clearTimeout(araZaman);
-      araTemizle.hidden = !ara.value;
-      const once = q.trim(); q = ara.value;
-      if (q.trim() !== once) araZaman = setTimeout(() => yukle(true), 300);
-    };
-    araTemizle.onclick = () => {
-      clearTimeout(araZaman);
-      const once = q.trim(); ara.value = q = ''; araTemizle.hidden = true; ara.focus();
-      if (once) yukle(true);
-    };
+    // Üst çubuk araması bu sayfanın sorgusunu değiştirir (ustAramaBagla)
+    aramaUygula = metin => { const once = q.trim(); q = metin; if (q.trim() !== once) yukle(true); };
     kutu.querySelector('#galeriEtiketler').onclick = e => { const b = e.target.closest('[data-etiket-sec]'); if (b) etiketSec(b.dataset.etiketSec); };
     kutu.querySelector('#galeriDaha').onclick = () => yukle(false);
     etiketleriYukle();
@@ -444,6 +443,7 @@
     if (!hazir) return;                          // API yayında değil: paylaşım özellikleri gizli kalır
     $('#galeriBtn').hidden = $('#paylasBtn').hidden = false;
     $('#galeriBtn').onclick = galeriAc;
+    ustAramaBagla();
     $('#paylasBtn').onclick = paylas;
     const kod = new URLSearchParams(location.search).get('t');
     if (kod){

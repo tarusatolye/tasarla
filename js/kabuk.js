@@ -134,10 +134,11 @@
     const k = kullanici;
     const rozet = (id, boyut) => k?.avatar ? `<img class="avatar" id="${id}" src="${esc(k.avatar)}" alt="">`
       : `<span class="avatar" id="${id}">${k ? esc(basHarf(k.adSoyad)) : ikon('user', boyut)}</span>`;
-    $('#kAvatar').outerHTML = rozet('kAvatar', 16);
+    $('#kAvatar').outerHTML = rozet('kAvatar', 22);
     $('#kAvatar2').outerHTML = rozet('kAvatar2', 18);
     // Giriş gerekmez (herkese açık); Pusula bağlantısı yalnız tarus çalışanları için.
     $('#kAd').textContent = $('#kAd2').textContent = k ? k.adSoyad : 'Misafir';
+    $('#kAlt').textContent = k ? (k.email || k.sirket || '') : 'Giriş gerekmez';
     $('#kSirket').textContent = k ? (k.sirket || k.email) : 'Giriş gerekmez · plan bu tarayıcıda saklanır';
     $('#girisBtn').hidden = !!k; $('#cikisBtn').hidden = !k; $('#pusulaAc').hidden = !k;
     $('#pusulaAktar').hidden = !k;

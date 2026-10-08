@@ -38,10 +38,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
 <style>@layer base, components;</style>
-<link rel="stylesheet" href="styles/tarus.css?v=0.1.9">
-<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.9">
-<link rel="stylesheet" href="styles/tasarla.css?v=0.1.9">
-<script src="js/tema.js?v=0.1.9"></script>
+<link rel="stylesheet" href="styles/tarus.css?v=0.1.10">
+<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.10">
+<link rel="stylesheet" href="styles/tasarla.css?v=0.1.10">
+<script src="js/tema.js?v=0.1.10"></script>
 <script type="importmap">
 {"imports":{
   "three":"./vendor/three/three.module.min.js",
@@ -133,9 +133,15 @@
   <header class="ust kart tarus-surface-card">
     <div class="marka">
       <img src="public/favicon.svg?v=1" alt="tarus Tasarla">
-      <div class="marka-yazi"><b>tarus <span>Tasarla</span></b><small id="subtitle">Örnek konut planı</small></div>
+      <div class="marka-yazi"><h1>tarus <span>Tasarla</span></h1><small id="subtitle">Örnek konut planı</small></div>
     </div>
-    <div class="spacer"></div>
+    <!-- Üst çubuk araması (kabuk .tarus-ust-arama, 400×30, 12 px): Hızlı Bakış'taki tasarım ve
+         şablonlarda arar; çizimdeyken yazınca Hızlı Bakış açılır. Galeri API'si yoksa gizli (js/galeri.js). -->
+    <label class="tarus-ust-arama" id="ustArama" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" id="galeriAra" placeholder="Tasarım veya şablon ara…" aria-label="Tasarım ve şablonlarda ara (başlık, açıklama, etiket)" title="Başlık, açıklama ya da etikette ara" autocomplete="off" maxlength="80">
+    </label>
+    <div class="ust-sag">
     <button class="dugme" id="galeriBtn" hidden aria-label="Hızlı Bakış" title="Herkesin paylaştığı tasarımlar ve şablonlar"><i data-ikon="layout-grid"></i><span class="aktar-yazi">Hızlı Bakış</span></button>
     <button class="dugme" id="paylasBtn" hidden aria-label="Paylaş" title="Tasarımı kaydet ve bağlantıyla paylaş"><i data-ikon="share"></i><span class="aktar-yazi">Paylaş</span></button>
     <button class="dugme birincil" id="pusulaAktar" hidden title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
@@ -144,7 +150,7 @@
       <div class="popup" id="temaPop"><div class="popup-baslik"><b>Tema</b></div><div class="tema-izgara" id="temaIzgara"></div></div>
     </div>
     <div class="menu" id="kullaniciMenu">
-      <button class="ust-tetik" id="kullaniciBtn" aria-haspopup="true" aria-expanded="false" title="Hesap"><span class="avatar" id="kAvatar"><i data-ikon="user" data-boyut="16"></i></span><span class="kullanici-ad" id="kAd">Misafir</span></button>
+      <button class="tarus-kullanici-karti" id="kullaniciBtn" aria-haspopup="true" aria-expanded="false" title="Hesap"><span class="avatar" id="kAvatar"><i data-ikon="user" data-boyut="22"></i></span><span class="kart-yazi"><b id="kAd">Misafir</b><small id="kAlt">Giriş gerekmez</small></span><i data-ikon="chevron-down" data-boyut="14" class="kart-ok"></i></button>
       <div class="popup" id="kullaniciPop">
         <div class="popup-baslik"><span class="avatar" id="kAvatar2"><i data-ikon="user" data-boyut="18"></i></span><div><b id="kAd2">Misafir</b><small id="kSirket">Giriş gerekmez · plan bu tarayıcıda saklanır</small></div></div>
         <button class="popup-oge" id="pusulaAc"><i data-ikon="external"></i>Pusula'yı aç</button>
@@ -153,6 +159,7 @@
         <button class="popup-oge" id="girisBtn" hidden title="tarus çalışanları planı Pusula'ya aktarmak için bağlanır"><i data-ikon="external"></i>Pusula ile bağlan</button>
         <button class="popup-oge tehlike" id="cikisBtn" hidden><i data-ikon="log-out"></i>Oturumu kapat</button>
       </div>
+    </div>
     </div>
   </header>
 
@@ -284,12 +291,12 @@
   </footer>
 </div>
 <div id="tarus-toasts" aria-live="polite"></div>
-<script src="js/ikonlar.js?v=0.1.9"></script>
-<script src="js/surum.js?v=0.1.9"></script>
-<script src="js/kutuphane.js?v=0.1.9"></script>
-<script src="js/pusula-oturum.js?v=0.1.9"></script>
-<script src="js/pusula-aktar.js?v=0.1.9"></script>
-<script src="js/kabuk.js?v=0.1.9"></script>
+<script src="js/ikonlar.js?v=0.1.10"></script>
+<script src="js/surum.js?v=0.1.10"></script>
+<script src="js/kutuphane.js?v=0.1.10"></script>
+<script src="js/pusula-oturum.js?v=0.1.10"></script>
+<script src="js/pusula-aktar.js?v=0.1.10"></script>
+<script src="js/kabuk.js?v=0.1.10"></script>
 <script src="public/tarus-context-menu.js"></script>
 <script>
 /* ======================= Yardımcılar ======================= */
@@ -1453,7 +1460,7 @@ fitView(); renderAll();
   hepsi();
 })();
 </script>
-<script src="js/galeri.js?v=0.1.9"></script>
+<script src="js/galeri.js?v=0.1.10"></script>
 <script type="module">
 /* ============================================================
  *  3B sahne (three.js) — 2B ile aynı state / ui'yi kullanır, geçişler animasyonludur:

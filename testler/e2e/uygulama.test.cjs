@@ -348,6 +348,7 @@ test('galeri: API yokken Paylaş ve Galeri görünmez', async () => {
   await sayfa.waitForTimeout(500);
   assert.equal(await sayfa.isVisible('#paylasBtn'), false);
   assert.equal(await sayfa.isVisible('#galeriBtn'), false);
+  assert.equal(await sayfa.isVisible('#ustArama'), false, 'API yokken üst çubuk araması gizli olmalı');
   assert.equal(await sayfa.isVisible('#hizliBakis'), false, 'API yokken Hızlı Bakış açılmamalı');
   assert.deepEqual(hatalar.filter(h => !/404/.test(h)), []);
   await ctx.close();
@@ -408,7 +409,8 @@ test('galeri: arama kutusu (gecikmeli, sunucuda) ve etiket süzgeci; paylaşırk
   assert.equal(new URLSearchParams(galeriIstekleri().at(-1).ara).get('q'), 'stüdyo');
   await sayfa.fill('#galeriAra', 'yok böyle');
   await sayfa.waitForSelector('.galeri-bos:text("Aramanızla eşleşen tasarım yok.")');
-  await sayfa.click('#galeriAraTemizle');
+  await sayfa.press('#galeriAra', 'Escape');   // üst çubuk araması (TSR-10): Esc temizler
+  assert.equal(await sayfa.inputValue('#galeriAra'), '');
   await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 2);
   // Etiket düğmesi süzer, ikinci basış kaldırır; karttaki etiket de süzer
   await sayfa.click('#galeriEtiketler [data-etiket-sec="küçük ev"]');
@@ -451,6 +453,16 @@ test('hızlı bakış: açılış ekranı galeri sayfası; Çizime dön ve düğ
   await sayfa.waitForSelector('#hizliBakis:not([hidden])');
   await sayfa.click('#galeriBtn');
   assert.equal(await sayfa.isVisible('#hizliBakis'), false, 'düğme ikinci basışta çizime dönmeli');
+  // Kabuk üst çubuğu (TSR-10): 80 px, başlık 24/700, arama 400×30 12 px, kullanıcı kartı 48 px avatar
+  const olcu = await sayfa.evaluate(() => {
+    const r = s => document.querySelector(s).getBoundingClientRect(), cs = s => getComputedStyle(document.querySelector(s));
+    return {ust: r('header.ust').height, baslik: cs('.marka-yazi h1').fontSize + '/' + cs('.marka-yazi h1').fontWeight,
+      arama: [r('#ustArama').width, r('#ustArama').height, cs('#galeriAra').fontSize], kart: r('#kullaniciBtn').height, avatar: r('#kAvatar').width};
+  });
+  assert.deepEqual(olcu, {ust: 80, baslik: '24px/700', arama: [400, 30, '12px'], kart: 58, avatar: 48});
+  // Çizimdeyken üst aramaya yazınca Hızlı Bakış o metinle açılır
+  await sayfa.fill('#galeriAra', 'stüdyo');
+  await sayfa.waitForFunction(() => !document.querySelector('#hizliBakis').hidden && document.querySelectorAll('.galeri-kart').length === 1);
   const ikinci = await sayfaAc({api: api.isleyici, adres: '/index.html?t=hazir1'});
   await ikinci.sayfa.waitForSelector('.tarus-dialog h2:text("Ferah salon")');
   assert.equal(await ikinci.sayfa.isVisible('#hizliBakis'), false, 'bağlantıyla açılışta Hızlı Bakış açılmamalı');
