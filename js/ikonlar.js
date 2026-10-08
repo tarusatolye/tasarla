@@ -1,4 +1,4 @@
-/* tarus Tasarla — Lucide ikonları (tek ikon kütüphanesi kuralı, tarus-standartlar §ikon).
+/* tarus Tasarla — Lucide ikonları (tek ikon kütüphanesi kuralı, STANDARTLAR §18 md. 8).
  * Derleme adımı olmadığı için kullanılan ikonların yolları buraya alınmıştır (lucide, ISC lisansı). */
 (function (kok) {
   const P = {

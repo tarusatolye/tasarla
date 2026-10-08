@@ -42,7 +42,7 @@ projesinden (MIT) çatallanmıştır; ayrıntı: [UCUNCU-TARAF-LISANSLARI.md](UC
   (ozluk/tarus.md §4.2 "Veri girişi").
 
 **Kabuk**
-- tarus-standartlar teması (8 tema, `tarus-theme` çereziyle uygulamalar arası ortak),
+- STANDARTLAR §9 teması (8 tema, `tarus-theme` çereziyle uygulamalar arası ortak),
   toolbar reçetesi, Lucide ikonları, Inter yazı tipi
 - Giriş yok; isteğe bağlı Pusula SSO (belirteçler yalnız bellekte), kullanıcı menüsü, Hakkında ve sürüm notları
 - Sağ tık menüsü ve Hata / Fikir Bildir (çizim alanı dışında; misafirken destek@tarus.tr'ye e-posta taslağı)

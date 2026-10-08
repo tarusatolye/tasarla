@@ -22,7 +22,7 @@ test('index.html Türkçe ve tarus başlığı taşıyor', () => {
   assert.ok(!/data-en/.test(html), 'eski data-en özniteliği kaldı');
 });
 
-test('arayüz metinlerinde uzun / orta tire yok (tarus-standartlar)', () => {
+test('arayüz metinlerinde uzun / orta tire yok (STANDARTLAR §10 Tire Kullanımı)', () => {
   const kod = fs.readFileSync(path.join(kok, 'index.html'), 'utf8') + fs.readFileSync(path.join(kok, 'js/kabuk.js'), 'utf8');
   // yorum satırları hariç, tırnak içindeki metinler
   const metinler = kod.split('\n').filter(s => !/^\s*(\/\/|\/?\*)/.test(s)).join('\n').match(/(['"`])(?:(?!\1)[^\\\n]|\\.)*\1/g) || [];
