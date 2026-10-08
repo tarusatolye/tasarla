@@ -116,7 +116,8 @@
   --muted2:         #475569;
   --muted:          #64748b;
   --accent:         #2563eb;
-  --accent-lt:      #60a5fa;
+  /* Yazı rengi olarak kullanılıyor: #60a5fa beyaz zeminde 2,54:1'di (denetim PSL-04), AA için koyu ton. */
+  --accent-lt:      #1d4ed8;
   --success:        #10b981;
   --warning:        #f59e0b;
   --danger:         #ef4444;
@@ -351,7 +352,8 @@
   --muted2:         #6f5c46;
   --muted:          #97836a;
   --accent:         #b45309;
-  --accent-lt:      #d97706;
+  /* #d97706 krem zeminde 3,19:1'di (PSL-04). */
+  --accent-lt:      #92400e;
   --success:        #047857;
   --warning:        #b45309;
   --danger:         #b91c1c;

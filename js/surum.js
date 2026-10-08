@@ -2,9 +2,11 @@
  * ozluk/surum-notlari/surum-notlari-tasarla.md. Uygulama içi not en çok 3 cümle.
  * 2026-10-04: numaralar 0.0.1'den yeniden düzenlendi (1.0.0-1.0.2 -> 0.0.1-0.0.3). */
 (function (kok) {
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const ILK_YAYIN = '2 Ekim 2026';
   const SURUM_NOTLARI = [
+    {surum: '0.1.9', tarih: '8 Ekim 2026',
+      not: 'Açık temalarda vurgu rengindeki yazılar daha koyu ve okunaklı.'},
     {surum: '0.1.8', tarih: '8 Ekim 2026',
       not: 'Telefonda 3B mahal adları açık panelin üstüne çıkmıyor, araç çubuğunda sık kullanılan düğmeler önde ve kaydırılabilen kısım kenarda soluklaşıyor. Bildirimler araç çubuğunun altında beliriyor, seçim çubuğu seçtiğiniz mobilyayı örtmüyor, maliyet satırlarında uzun malzeme adları tek satırda kalıyor. Hızlı Bakış’ta tek «Çizime dön» düğmesi var, karanlık temalarda önizleme zemini temaya uyuyor ve geri alınabilen Temizle artık kırmızı değil.'},
     {surum: '0.1.7', tarih: '8 Ekim 2026',
