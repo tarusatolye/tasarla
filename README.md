@@ -75,6 +75,9 @@ npm run test:e2e  # Playwright ile uçtan uca: girişsiz açılış, 3B sahne, P
 cd api && DJANGO_DEBUG=1 python manage.py test   # galeri API'si: kayıt, arama/etiket, moderasyon, önizleme kartı meta ucu
 ```
 
+Playwright'ın kendi Chromium'u kurulu değilse uçtan uca testler kurulu Edge ya da Chrome'a
+kendiliğinden düşer; kanal `TASARLA_TARAYICI=msedge` (ya da `chrome`) ile de seçilebilir.
+
 ## Yayın
 
 Coolify'da Dockerfile ile (Caddy, statik). Adımlar: [docs/RUNBOOK-yayin.md](docs/RUNBOOK-yayin.md).

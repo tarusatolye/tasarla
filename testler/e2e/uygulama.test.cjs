@@ -26,8 +26,24 @@ test.before(async () => {
   // "yerel mod" açıldığı için canlıdaki Pusula yönlendirmesi testte görünmüyordu.
   await new Promise(r => sunucu.listen(0, '0.0.0.0', r));
   adres = `http://127.0.0.2:${sunucu.address().port}`;
-  tarayici = await chromium.launch();
+  tarayici = await tarayiciAc();
 });
+
+// Playwright'ın kendi Chromium'u kurulu değilse (`npx playwright install` yapılmamış makine)
+// testler kalmasın: TASARLA_TARAYICI=msedge|chrome ile kanal seçilir; seçilmemişse kurulu
+// Edge ya da Chrome'a kendiliğinden düşülür.
+async function tarayiciAc(){
+  const kanal = process.env.TASARLA_TARAYICI;
+  if (kanal) return chromium.launch({channel: kanal});
+  try { return await chromium.launch(); }
+  catch (e) {
+    if (!/Executable doesn't exist|browserType\.launch/.test(e.message)) throw e;
+    for (const k of ['msedge', 'chrome']) {
+      try { return await chromium.launch({channel: k}); } catch (_) { /* sıradaki kanal */ }
+    }
+    throw e;
+  }
+}
 test.after(async () => { await tarayici?.close(); sunucu?.close(); });
 
 /* Pusula taklidi: istekleri kaydeder, yanıtları senaryoya göre verir */
@@ -404,7 +420,7 @@ test('galeri: arama kutusu (gecikmeli, sunucuda) ve etiket süzgeci; paylaşırk
   await sayfa.click('.galeri-kart[data-kod="hazir1"] [data-etiket-sec="iskandinav"]');
   await sayfa.waitForFunction(() => document.querySelectorAll('.galeri-kart').length === 1 && document.querySelector('.galeri-kart[data-kod="hazir1"]'));
   // Paylaş: etiketler gövdede, temizlenmiş
-  await sayfa.click('#hbCizim');
+  await sayfa.click('#galeriBtn');   // Hızlı Bakış'ta tek «Çizime dön» üst çubukta (0.1.8)
   await sayfa.click('#paylasBtn');
   await sayfa.fill('#gBaslik', 'Etiketli');
   await sayfa.fill('#gEtiketler', ' Salon, #Işıklı Mutfak, salon');
@@ -427,7 +443,7 @@ test('hızlı bakış: açılış ekranı galeri sayfası; Çizime dön ve düğ
   assert.equal((await sayfa.textContent('#hizliBakis h1')).trim(), 'Hızlı Bakış');
   assert.equal((await sayfa.textContent('#galeriBtn')).trim(), 'Çizime dön');
   assert.equal(await sayfa.isVisible('main#stage'), false, 'çizim alanı Hızlı Bakış altında görünmemeli');
-  await sayfa.click('#hbCizim');
+  await sayfa.click('#galeriBtn');   // Hızlı Bakış'ta tek «Çizime dön» üst çubukta (0.1.8)
   assert.equal(await sayfa.isVisible('#hizliBakis'), false);
   assert.equal(await sayfa.isVisible('main#stage'), true);
   assert.equal((await sayfa.textContent('#galeriBtn')).trim(), 'Hızlı Bakış');

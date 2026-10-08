@@ -691,7 +691,11 @@ aside.tarus-sidebar, header.tarus-header, main.tarus-main-card {
   .bg-danger, .bg-success, .bg-warning, .bg-brand,
   .bg-\[var\(--danger\)\], .bg-\[var\(--success\)\], .bg-\[color\:var\(--warning\)\],
   .bg-black\/60:not(.fixed), .bg-black\/70:not(.fixed), .bg-black\/80:not(.fixed), .bg-black\/90:not(.fixed),
-  .tarus-button-danger.is-solid
+  .tarus-button-danger.is-solid,
+  /* Baş harf avatarı (BasHarf) tanımı gereği dolu zemin + beyaz harf; zemin
+     listede olmayan bir renk olunca (ör. müellif `bg-kat-3`) harf siyah çıkıyordu
+     (Pusula Borçlar › Müellif Alacakları, 2026-10-08). */
+  .tarus-avatar-harf
 ).text-white {
   color: #ffffff !important;
 }

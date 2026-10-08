@@ -306,8 +306,7 @@
     const kutu = el;
     kutu.innerHTML = `
       <div class="hb-baslik">
-        <div><h1>Hızlı Bakış</h1><p class="muted">Herkesin paylaştığı tasarımlar ve şablonlar. Birini açın ya da çiziminize devam edin.</p></div>
-        <button class="dugme birincil" id="hbCizim">${kok.ikon('ruler')}<span>Çizime dön</span></button>
+        <div><h1>Hızlı Bakış</h1><p class="muted">Herkesin paylaştığı tasarımlar ve şablonlar. Birini açın ya da üst çubuktaki «Çizime dön» ile çiziminize devam edin.</p></div>
       </div>
       <div class="galeri-ust">
         ${segment('tur', [['tumu', 'Tüm tasarımlar'], ['sablon', 'Şablonlar'], ...(yonetici ? [['inceleme', 'İnceleme']] : [])], tur)}
@@ -326,7 +325,6 @@
     kutu.hidden = false;
     document.querySelector('.app')?.classList.add('hb-acik');
     dugmeEtiketi();
-    kutu.querySelector('#hbCizim').onclick = sayfaKapat;
     ['tur', 'sira'].forEach(ad => kutu.querySelectorAll(`[data-${ad}]`).forEach(b => b.onclick = () => {
       if (ad === 'tur') tur = b.dataset.tur; else sira = b.dataset.sira;
       kutu.querySelectorAll(`[data-${ad}]`).forEach(x => { x.classList.toggle('is-active', x === b); x.setAttribute('aria-selected', String(x === b)); });

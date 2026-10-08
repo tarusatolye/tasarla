@@ -1,6 +1,6 @@
 {
   "name": "tasarla",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "tarus Tasarla - giriş gerektirmeyen 2B/3B mekân tasarımı (statik, derleme adımı yok)",
   "license": "MIT",

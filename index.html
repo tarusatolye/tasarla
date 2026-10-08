@@ -38,10 +38,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
 <style>@layer base, components;</style>
-<link rel="stylesheet" href="styles/tarus.css?v=0.1.7">
-<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.7">
-<link rel="stylesheet" href="styles/tasarla.css?v=0.1.7">
-<script src="js/tema.js?v=0.1.7"></script>
+<link rel="stylesheet" href="styles/tarus.css?v=0.1.8">
+<link rel="stylesheet" href="styles/tarus-toolbar.css?v=0.1.8">
+<link rel="stylesheet" href="styles/tasarla.css?v=0.1.8">
+<script src="js/tema.js?v=0.1.8"></script>
 <script type="importmap">
 {"imports":{
   "three":"./vendor/three/three.module.min.js",
@@ -141,7 +141,7 @@
     <button class="dugme birincil" id="pusulaAktar" hidden title="Planı Pusula'da teklif ya da proje kaydına dönüştür"><i data-ikon="send"></i><span class="aktar-yazi">Pusula'ya aktar</span></button>
     <div class="menu" id="temaMenu">
       <button class="ust-tetik" id="temaBtn" title="Tema" aria-haspopup="true" aria-expanded="false"><i data-ikon="palette" data-boyut="18"></i></button>
-      <div class="popup" id="temaPop" style="min-width:300px"><div class="popup-baslik"><b>Tema</b></div><div class="tema-izgara" id="temaIzgara"></div></div>
+      <div class="popup" id="temaPop"><div class="popup-baslik"><b>Tema</b></div><div class="tema-izgara" id="temaIzgara"></div></div>
     </div>
     <div class="menu" id="kullaniciMenu">
       <button class="ust-tetik" id="kullaniciBtn" aria-haspopup="true" aria-expanded="false" title="Hesap"><span class="avatar" id="kAvatar"><i data-ikon="user" data-boyut="16"></i></span><span class="kullanici-ad" id="kAd">Misafir</span></button>
@@ -160,7 +160,7 @@
        kalır (plan ve tuval bozulmaz), yalnız görünmez olur. İçeriği js/galeri.js çizer. -->
   <section id="hizliBakis" class="hizli-bakis kart tarus-surface-card" hidden aria-label="Hızlı Bakış"></section>
 
-  <div class="tarus-toolbar arac kart">
+  <div class="tarus-toolbar arac">
     <div class="tarus-toolbar-segment" id="paneBtns">
       <button class="tarus-toolbar-segment-button btn" id="tgLib"><i data-ikon="panel-left"></i>Kütüphane</button>
       <button class="tarus-toolbar-segment-button btn" id="tgPanel"><i data-ikon="panel-right"></i>Özellikler</button>
@@ -175,7 +175,7 @@
       <button class="tarus-toolbar-segment-button btn" data-tool="measure" title="Ölçü (M)"><i data-ikon="ruler"></i>Ölçü</button>
       <button class="tarus-toolbar-segment-button btn" data-tool="demolish" title="Taşıyıcı olmayan duvarı yık (X)"><i data-ikon="hammer"></i>Duvar yık</button>
     </div>
-    <div class="tarus-toolbar-segment only2d">
+    <div class="tarus-toolbar-segment only2d" id="zoomSeg">
       <button class="tarus-toolbar-segment-button btn is-icon-only" id="zoomOut" title="Uzaklaştır (−)" aria-label="Uzaklaştır"><i data-ikon="zoom-out"></i></button>
       <button class="tarus-toolbar-segment-button btn is-icon-only" id="zoomIn" title="Yakınlaştır (+)" aria-label="Yakınlaştır"><i data-ikon="zoom-in"></i></button>
       <button class="tarus-toolbar-segment-button btn" id="fit" title="Pencereye sığdır (F)"><i data-ikon="scan"></i>Sığdır</button>
@@ -190,10 +190,10 @@
       <button class="tarus-toolbar-segment-button btn" id="vIso">Perspektif</button>
       <button class="tarus-toolbar-segment-button btn" id="vTop">Tepeden</button>
     </div>
-    <div class="tarus-toolbar-segment">
+    <div class="tarus-toolbar-segment" id="gecmisSeg">
       <button class="tarus-toolbar-segment-button btn is-icon-only" id="undo" title="Geri al (Ctrl+Z)" aria-label="Geri al"><i data-ikon="undo"></i></button>
       <button class="tarus-toolbar-segment-button btn is-icon-only" id="redo" title="Yinele (Ctrl+Shift+Z)" aria-label="Yinele"><i data-ikon="redo"></i></button>
-      <button class="tarus-toolbar-segment-button btn is-danger" id="clearAll" title="Tüm mobilya ve beyaz eşyayı kaldır (geri alınabilir)"><i data-ikon="trash"></i>Temizle</button>
+      <button class="tarus-toolbar-segment-button btn" id="clearAll" title="Tüm mobilya ve beyaz eşyayı kaldır (geri alınabilir)"><i data-ikon="trash"></i>Temizle</button>
     </div>
     <span class="tarus-toolbar-divider only2d"></span>
     <div class="tarus-toolbar-segment only2d" id="layers">
@@ -284,12 +284,12 @@
   </footer>
 </div>
 <div id="tarus-toasts" aria-live="polite"></div>
-<script src="js/ikonlar.js?v=0.1.7"></script>
-<script src="js/surum.js?v=0.1.7"></script>
-<script src="js/kutuphane.js?v=0.1.7"></script>
-<script src="js/pusula-oturum.js?v=0.1.7"></script>
-<script src="js/pusula-aktar.js?v=0.1.7"></script>
-<script src="js/kabuk.js?v=0.1.7"></script>
+<script src="js/ikonlar.js?v=0.1.8"></script>
+<script src="js/surum.js?v=0.1.8"></script>
+<script src="js/kutuphane.js?v=0.1.8"></script>
+<script src="js/pusula-oturum.js?v=0.1.8"></script>
+<script src="js/pusula-aktar.js?v=0.1.8"></script>
+<script src="js/kabuk.js?v=0.1.8"></script>
 <script src="public/tarus-context-menu.js"></script>
 <script>
 /* ======================= Yardımcılar ======================= */
@@ -753,6 +753,20 @@ function renderSel(){
     s += `<polygon points="${r.poly.map(p=>p.join(',')).join(' ')}" fill="rgba(181,101,58,.08)" stroke="#b5653a" stroke-width="2" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
   }
   $('#gSel').innerHTML = s;
+  fabKonum();
+}
+// Seçim çubuğu (#fab) seçili mobilyanın ya da ölçü etiketinin üstüne biniyorsa
+// çizim alanının üstüne alınır; ikisinde de biniyorsa altta kalır (TSR-04).
+function fabKonum(){
+  const fab = $('#fab');
+  if (!fab || !fab.classList.contains('show')) return;
+  fab.classList.remove('ustte');
+  if (ui.sel?.kind !== 'furn') return;
+  const sr = $('#gSel').getBoundingClientRect();
+  const kes = r => !(r.right <= sr.left || r.left >= sr.right || r.bottom <= sr.top || r.top >= sr.bottom);
+  if (!sr.width || !kes(fab.getBoundingClientRect())) return;
+  fab.classList.add('ustte');
+  if (kes(fab.getBoundingClientRect())) fab.classList.remove('ustte');
 }
 
 function renderAll(){
@@ -780,7 +794,7 @@ function renderPanel(){
 function overviewPanel(){
   const rows = ROOMS.map(r => {
     const st = state.rooms[r.id];
-    return `<tr class="click" data-room="${r.id}"><td><span class="sw" style="background:${MATS[st.mat].sw}"></span>${esc(st.name)}${r.counted===false?' <span class="muted">*</span>':''}</td>
+    return `<tr class="click" data-room="${r.id}"><td class="ad" title="${esc(st.name)}"><span class="sw" style="background:${MATS[st.mat].sw}"></span>${esc(st.name)}${r.counted===false?' <span class="muted">*</span>':''}</td>
       <td class="r">${fmtTR(area(r.poly))} m²</td></tr>`;
   }).join('');
   const tot = ROOMS.filter(r => r.counted !== false).reduce((a,r) => a + area(r.poly), 0);
@@ -788,7 +802,7 @@ function overviewPanel(){
   ROOMS.forEach(r => { const m = state.rooms[r.id].mat; byMat[m] = (byMat[m]||0) + area(r.poly); });
   let cost = 0;
   const matRows = Object.entries(byMat).map(([m,a]) => { const c = a*MATS[m].price*1.05; cost += c;
-    return `<tr><td><span class="sw" style="background:${MATS[m].sw}"></span>${MATS[m].name}</td><td class="r">${fmtTR(a,1)} m²</td><td class="r">${tl(c)}</td></tr>`; }).join('');
+    return `<tr><td class="ad" title="${esc(MATS[m].name)}"><span class="sw" style="background:${MATS[m].sw}"></span>${MATS[m].name}</td><td class="r">${fmtTR(a,1)} m²</td><td class="r">${tl(c)}</td></tr>`; }).join('');
   const dem = state.demolished.map(id => WALLS[+id.slice(1)]);
   const demLen = dem.reduce((a,w) => a + Math.max(w[2]-w[0], w[3]-w[1]), 0) / 1000;
   return `
@@ -803,7 +817,7 @@ function overviewPanel(){
     <div class="stats"><div><small>Mobilya</small><span class="big">${state.furniture.length}</span></div>
       <div><small>Yıkılan duvar</small><span class="big">${fmtTR(demLen,1)}</span> m</div></div>
     <div class="actions"><button class="dugme" id="clearMeasure">${ikon('ruler')}Ölçüleri temizle (${state.measures.length})</button>
-      <button class="dugme tehlike" id="clearFurn">${ikon('trash')}Yerleşimi temizle</button></div></section>
+      <button class="dugme" id="clearFurn">${ikon('trash')}Yerleşimi temizle</button></div></section>
   ${COARSE ? `<section><h3>Dokunmatik kullanım</h3><div class="kbd">
     <kbd>Tek parmak</kbd><span>Boş alanda sürükleyerek kaydırın</span><kbd>İki parmak</kbd><span>Kıstırarak yakınlaştırın, sürükleyerek kaydırın</span>
     <kbd>Kütüphane</kbd><span>Dokunun: ekranın ortasına yerleşir; basılı tutup sağa sürükleyin: istediğiniz yere</span>
@@ -834,6 +848,7 @@ function renderFab(){
        <button class="dugme narrow-only" data-a="prop">Özellikler</button><button class="dugme" data-a="done">${ikon('check')}Tamam</button>`
     : `<span class="name">${esc(state.rooms[r.id].name)}</span><button class="dugme narrow-only" data-a="prop">Döşeme / özellikler</button><button class="dugme" data-a="done">${ikon('check')}Tamam</button>`;
   fab.classList.add('show');
+  fabKonum();
   fab.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
     rotL:() => rotateSel(-90), rotR:() => rotateSel(90), dup:duplicateSel, del:deleteSel,
     prop:() => drawer('panel', true), done:() => { select(null); closeDrawers(); },
@@ -843,7 +858,7 @@ function renderFab(){
 async function clearLayout(){
   const n = state.furniture.length;
   if (!n) return toast('Temizlenecek mobilya yok');
-  if (!await TarusKabuk.onayla({baslik:'Yerleşimi temizle', metin:`${n} mobilya ve beyaz eşyanın tamamı kaldırılacak. Duvarlar, döşemeler ve ölçüler korunur; «Geri al» ile geri getirebilirsiniz.`, onay:'Temizle', tehlike:true})) return;
+  if (!await TarusKabuk.onayla({baslik:'Yerleşimi temizle', metin:`${n} mobilya ve beyaz eşyanın tamamı kaldırılacak. Duvarlar, döşemeler ve ölçüler korunur; «Geri al» ile geri getirebilirsiniz.`, onay:'Temizle'})) return;
   ui.sel = null; mutate(() => state.furniture = []);
   toast('Yerleşim temizlendi; geri getirmek için «Geri al»', 'basari');
 }
@@ -1411,8 +1426,34 @@ $('#libAra').oninput = e => { libFilter = e.target.value; $('#libAraTemizle').hi
 $('#libAraTemizle').onclick = () => { libFilter = ''; $('#libAra').value = ''; $('#libAraTemizle').hidden = true; buildLib(); $('#libAra').focus(); };
 $('#tip').textContent = TIPS()['2d'];
 fitView(); renderAll();
+
+// Tost konumu: STANDARTLAR §22.1 «üst çubuğun altı». Tasarla'da araç çubuğu üst
+// çubuğun hemen altında ayrı bir şerit; tostlar onun da altında başlar, düğmeleri
+// örtmez (TSR-04). Hızlı Bakış açıkken araç çubuğu gizli: üst çubuğun altı.
+// Telefonda araç çubuğu tek satır, yatay kaydırılır: kenarda solma ipucu taşan
+// düğmeleri belli eder (TSR-02).
+(function ustSeritler(){
+  const app = document.querySelector('.app'), arac = document.querySelector('.tarus-toolbar.arac'), ust = document.querySelector('header.ust');
+  const tostUst = () => {
+    const ref = app.classList.contains('hb-acik') ? ust : arac;
+    const alt = ref.getBoundingClientRect().bottom;
+    if (alt > 0) document.documentElement.style.setProperty('--tost-ust', Math.round(alt + 12) + 'px');
+  };
+  const kaydirma = () => {
+    const fazla = arac.scrollWidth - arac.clientWidth;
+    arac.classList.toggle('kayar-sol', fazla > 1 && arac.scrollLeft > 2);
+    arac.classList.toggle('kayar-sag', fazla > 1 && arac.scrollLeft < fazla - 2);
+  };
+  const hepsi = () => { tostUst(); kaydirma(); };
+  arac.addEventListener('scroll', kaydirma, {passive: true});
+  addEventListener('resize', hepsi);
+  if ('ResizeObserver' in window) new ResizeObserver(hepsi).observe(arac);
+  new MutationObserver(hepsi).observe(app, {attributes: true, attributeFilter: ['class']});
+  new MutationObserver(kaydirma).observe(document.body, {attributes: true, attributeFilter: ['class']});   // 2B/3B geçişi araç sayısını değiştirir
+  hepsi();
+})();
 </script>
-<script src="js/galeri.js?v=0.1.7"></script>
+<script src="js/galeri.js?v=0.1.8"></script>
 <script type="module">
 /* ============================================================
  *  3B sahne (three.js) — 2B ile aynı state / ui'yi kullanır, geçişler animasyonludur:
