@@ -435,6 +435,78 @@
   --kat-6: #ea580c;
 }
 
+/* ── Durum metni belirteçleri (kabuk 0.7.5, denetim PSL-04) ──
+   --success/--warning/--danger dolgu, kenar ve ikon tonudur. Açık temalarda bu
+   tonlar yazı olarak AA'yı geçmiyordu (Modern beyazda #f59e0b 2,15:1, #10b981
+   2,54:1, #ef4444 3,76:1). Yazı olarak kullanıldığında bu belirteçler yazılır:
+   rozet metni, durum etiketi, tehlike düğmesi yazısı. Tailwind'de `text-success`
+   / `text-warning` / `text-danger` bunlara bağlıdır (tailwind.css `--text-color-*`);
+   `bg-success/10`, `border-danger/20` ton belirtecini kullanmaya devam eder.
+   Koyu temalarda ton zaten okunur: belirteç tonun kendisi. Açık temalarda koyu
+   ton; kart, zemin ve %10 rozet zemini üstünde ≥ 4,5:1 (ölçüm README 0.7.5).
+   Her tema seçicisinde tanımlı (§12b köprü token'ı tuzağı). */
+:root,
+.theme-karanlik, .theme-ocean, .theme-forest, .theme-sunset, .theme-violet {
+  --success-text: var(--success);
+  --warning-text: var(--warning);
+  --danger-text:  var(--danger);
+}
+.theme-modern {
+  --success-text: #047857;
+  --warning-text: #92400e;
+  --danger-text:  #b91c1c;
+}
+.theme-sage {
+  --success-text: #166534;
+  --warning-text: #8a5a14;
+  --danger-text:  #a8322e;
+}
+.theme-sand {
+  --success-text: #065f46;
+  --warning-text: #92400e;
+  --danger-text:  #b91c1c;
+}
+/* Tailwind durum yazı sınıfları metin belirtecine bağlanır. Uygulamaların @theme'i
+   `text-danger`'ı --color-danger (ton) ile üretiyor; aynı `utilities` katmanında
+   sonra gelen bu kural onu geçer, `hover:text-white` gibi değiştiricili sınıflar
+   (daha yüksek özgüllük) yine kazanır. Tailwind'siz uygulamada etkisizdir. */
+@layer utilities {
+  .text-success, .text-\[var\(--success\)\], .text-\[color\:var\(--success\)\] { color: var(--success-text); }
+  .text-warning, .text-\[var\(--warning\)\], .text-\[color\:var\(--warning\)\] { color: var(--warning-text); }
+  .text-danger,  .text-\[var\(--danger\)\],  .text-\[color\:var\(--danger\)\]  { color: var(--danger-text); }
+  .text-success\/90 { color: color-mix(in srgb, var(--success-text) 90%, transparent); }
+  .text-success\/80 { color: color-mix(in srgb, var(--success-text) 80%, transparent); }
+  .text-success\/70 { color: color-mix(in srgb, var(--success-text) 70%, transparent); }
+  .text-warning\/90 { color: color-mix(in srgb, var(--warning-text) 90%, transparent); }
+  .text-warning\/80 { color: color-mix(in srgb, var(--warning-text) 80%, transparent); }
+  .text-warning\/70 { color: color-mix(in srgb, var(--warning-text) 70%, transparent); }
+  .text-warning\/60 { color: color-mix(in srgb, var(--warning-text) 60%, transparent); }
+  .text-danger\/90  { color: color-mix(in srgb, var(--danger-text) 90%, transparent); }
+  .text-danger\/80  { color: color-mix(in srgb, var(--danger-text) 80%, transparent); }
+  .text-danger\/70  { color: color-mix(in srgb, var(--danger-text) 70%, transparent); }
+}
+
+/* ── Marka adı yazısı (kabuk 0.7.5, denetim KBK-04; kullanıcı kararı «açık temada koyu ton») ──
+   Kenar çubuğundaki ürün adı ve Hakkında başlığı `text-brand-lt` ile marka rengini
+   YAZI olarak kullanır. --brand-lt koyu tema için açık tondur; açık temada beyaz
+   kartta 2,4–3,8:1 kalıyordu (Arkiv #06b6d4 2,43:1). Açık temalarda yazı rengi
+   --brand-lt'nin OKLCH açıklığı L ≤ 0,45'e kırpılmış hâlidir: ton ve doygunluk
+   aynı, zaten koyu ton değişmez. 14 marka × 3 açık tema × kart/zemin/kenar
+   çubuğu zemininde en düşük 4,73:1 (README 0.7.5). Marka kutusu/glif --brand
+   ile çizilir, etkilenmez. Göreli renk sözdizimini tanımayan eski tarayıcıda
+   değer geçersiz olur, yazı üst öğenin metin rengini alır (okunur kalır). */
+:root,
+.theme-karanlik, .theme-ocean, .theme-forest, .theme-sunset, .theme-violet {
+  --brand-yazi: var(--brand-lt);
+}
+.theme-modern, .theme-sage, .theme-sand {
+  --brand-yazi: oklch(from var(--brand-lt) min(l, 0.45) c h);
+}
+@layer utilities {
+  :is(.theme-modern, .theme-sage, .theme-sand) .text-brand-lt,
+  .text-brand-lt:is(.theme-modern, .theme-sage, .theme-sand) { color: var(--brand-yazi); }
+}
+
 /* Üst çubuk ve kenar çubuğu yüzeyi: bdr-2 kenarlık + elev-1 gölge.
    Pusula'da <header> ve <aside> "rounded-tarus tarus-surface-card" kullanır. */
 @layer components {
@@ -603,7 +675,7 @@ aside.tarus-sidebar, header.tarus-header, main.tarus-main-card {
 .tarus-bildirim .tarus-bildirim-uyari:last-child { border-bottom: 0; }
 .tarus-bildirim .tarus-bildirim-uyari.is-tiklanir { cursor: pointer; }
 .tarus-bildirim .tarus-bildirim-uyari.is-tiklanir:hover { background: color-mix(in srgb, var(--warning) 10%, transparent); }
-.tarus-bildirim .tarus-bildirim-uyari-etiket { font-size: 10px; line-height: 15px; font-weight: 900; color: var(--warning); }
+.tarus-bildirim .tarus-bildirim-uyari-etiket { font-size: 10px; line-height: 15px; font-weight: 900; color: var(--warning-text); }
 .tarus-bildirim .tarus-bildirim-satir {
   display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border-color);
 }
@@ -637,9 +709,9 @@ aside.tarus-sidebar, header.tarus-header, main.tarus-main-card {
 }
 .tarus-bildirim .tarus-bildirim-sil:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .tarus-bildirim .seviye-info { color: oklch(62.3% 0.214 259.815); }
-.tarus-bildirim .seviye-success { color: var(--success); }
-.tarus-bildirim .seviye-warning { color: var(--warning); }
-.tarus-bildirim .seviye-error { color: var(--danger); }
+.tarus-bildirim .seviye-success { color: var(--success-text); }
+.tarus-bildirim .seviye-warning { color: var(--warning-text); }
+.tarus-bildirim .seviye-error { color: var(--danger-text); }
 
 
 /* ── Açık tema: solid zemin üstündeki yazı beyaz (STANDARTLAR §17b istisnası) ──
@@ -732,3 +804,78 @@ aside.tarus-sidebar, header.tarus-header, main.tarus-main-card {
   font-feature-settings: "tnum" 1, "zero" 1;
 }
 
+/* ── Yerel form denetimleri: onay kutusu/radyo, kaydırıcı, renk (kabuk 0.7.5, TSR-14) ──
+   Düz CSS reçeteleri. tarus.css'te durur (tarus-bilesen.css'te değil): React'sız
+   uygulamalar (Tasarla, Pafta, Belge) yalnız tarus.css taşır, onlar da kullanır. Yerel
+   `<input>` kalır (klavye, form, ekran okuyucu tarayıcıdan gelir), yalnız görünüm
+   8 temada token'dan çizilir. Sınıf girdinin kendisine verilir:
+     <input type="checkbox" class="tarus-onay">   <input type="radio" class="tarus-onay">
+     <input type="range" class="tarus-kaydirici" style="--kaydirici-dolu: 40%">
+     <input type="color" class="tarus-renk">
+   Etiketli satır: <label class="tarus-onay-etiket"><input … class="tarus-onay"> Metin</label>.
+   Boş kutunun kenarı `--muted` (açık temalarda zemine ≥ 3:1, WCAG 1.4.11); dolu
+   kutu `--accent` + beyaz işaret. Kaydırıcının dolu kısmı isteğe bağlı
+   `--kaydirici-dolu` (yüzde) ile çizilir; verilmezse iz düz kalır. */
+@layer components {
+  .tarus-onay {
+    appearance:none; -webkit-appearance:none; flex:0 0 auto;
+    box-sizing:border-box; width:16px; height:16px; margin:0; padding:0;
+    display:inline-grid; place-content:center; vertical-align:middle; cursor:pointer;
+    border:1.5px solid var(--muted); border-radius:4px; background:var(--input-bg);
+    transition:background-color var(--t-fast, 150ms ease), border-color var(--t-fast, 150ms ease);
+  }
+  .tarus-onay[type="radio"] { border-radius:50%; }
+  .tarus-onay:hover:not(:disabled) { border-color:var(--accent); }
+  .tarus-onay:checked, .tarus-onay:indeterminate { border-color:var(--accent); background:var(--accent); }
+  .tarus-onay[type="checkbox"]:checked::before {
+    content:""; width:9px; height:5px; margin-top:-2px;
+    border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg);
+  }
+  .tarus-onay[type="checkbox"]:indeterminate::before { content:""; width:8px; height:2px; border-radius:1px; background:#fff; }
+  .tarus-onay[type="radio"]:checked::before { content:""; width:6px; height:6px; border-radius:50%; background:#fff; }
+  .tarus-onay:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .tarus-onay:disabled { cursor:not-allowed; opacity:.5; }
+  .tarus-onay-etiket {
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer;
+    font-size:13px; line-height:18px; font-weight:500; color:var(--text);
+  }
+  .tarus-onay-etiket:has(.tarus-onay:disabled) { cursor:not-allowed; color:var(--muted2); }
+
+  .tarus-kaydirici {
+    --kaydirici-iz: var(--ovl-5);
+    appearance:none; -webkit-appearance:none; box-sizing:border-box;
+    width:100%; height:20px; margin:0; padding:0; background:transparent; cursor:pointer;
+  }
+  .tarus-kaydirici::-webkit-slider-runnable-track {
+    height:4px; border-radius:999px;
+    background:linear-gradient(to right, var(--accent) 0 var(--kaydirici-dolu, 0%), var(--kaydirici-iz) var(--kaydirici-dolu, 0%));
+  }
+  .tarus-kaydirici::-moz-range-track { height:4px; border-radius:999px; background:var(--kaydirici-iz); }
+  .tarus-kaydirici::-moz-range-progress { height:4px; border-radius:999px; background:var(--accent); }
+  .tarus-kaydirici::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none; box-sizing:border-box;
+    width:16px; height:16px; margin-top:-6px; border-radius:50%;
+    border:2px solid var(--card); background:var(--accent); box-shadow:var(--elev-1);
+  }
+  .tarus-kaydirici::-moz-range-thumb {
+    box-sizing:border-box; width:16px; height:16px; border-radius:50%;
+    border:2px solid var(--card); background:var(--accent); box-shadow:var(--elev-1);
+  }
+  .tarus-kaydirici:focus-visible { outline:none; }
+  .tarus-kaydirici:focus-visible::-webkit-slider-thumb { box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .tarus-kaydirici:focus-visible::-moz-range-thumb { box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .tarus-kaydirici:disabled { cursor:not-allowed; opacity:.5; }
+
+  .tarus-renk {
+    appearance:none; -webkit-appearance:none; box-sizing:border-box; flex:0 0 auto;
+    width:38px; height:38px; margin:0; padding:6px; cursor:pointer;
+    border:1px solid var(--bdr-2); border-radius:var(--r-sm, 8px); background:var(--input-bg);
+    transition:border-color var(--t-fast, 150ms ease);
+  }
+  .tarus-renk:hover:not(:disabled) { border-color:var(--bdr-3); }
+  .tarus-renk:focus-visible { outline:none; border-color:color-mix(in srgb, var(--accent) 60%, transparent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+  .tarus-renk::-webkit-color-swatch-wrapper { padding:0; }
+  .tarus-renk::-webkit-color-swatch { border:1px solid var(--bdr-3); border-radius:5px; }
+  .tarus-renk::-moz-color-swatch { border:1px solid var(--bdr-3); border-radius:5px; }
+  .tarus-renk:disabled { cursor:not-allowed; opacity:.5; }
+}

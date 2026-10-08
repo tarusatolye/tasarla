@@ -8,12 +8,39 @@
  *
  * İstisnalar:
  * - Metin seçiliyken veya input, textarea, contenteditable alanlarında tarayıcının yerel menüsü korunur.
+ *
+ * Hata bildir (kabuk 0.7.5, Belge 0.4.x'ten alındı — BLG-06):
+ * - Sayfa `window.__tarusOpenHataBildir(tur?)` kancasını kurduysa (React uygulamaları,
+ *   HataBildirKoprusu) Pusula'daki pencere açılır; yoksa aşağıdaki basit pencere.
+ * - React'sız sayfa Pusula penceresini ayrı paketten (kabuk hata-bildir/derle.sh →
+ *   tarus-hata-bildir.js/.css) ilk tıklamada yükleyebilir. İsteğe bağlı, betik
+ *   etiketinde: <script src="/custom/tarus-context-menu.js"
+ *     data-hata-bildir-paketi="/custom/tarus-hata-bildir" data-hata-bildir-surum="0.4.2">
+ *   (ya da `window.TARUS_HATA_BILDIR_PAKETI = '/custom/tarus-hata-bildir'`). Paket
+ *   yüklenemezse basit pencere açılır.
+ * - `window.__tarusHataBildirAc('bug' | 'idea')`: sayfa (ör. Hakkında'daki «Yeni
+ *   bildirim») aynı pencereyi açar. Gönderim başarılıysa `tarus:hata-bildirildi`
+ *   olayı yayılır; sayfada `window.TarusShell.toast` varsa sonuç toast ile söylenir.
  */
 (function () {
   'use strict';
 
   if (window.__tarusContextMenuInstalled) return;
   window.__tarusContextMenuInstalled = true;
+
+  // Betik etiketinin seçenekleri yükleme anında okunur (currentScript sonra null olur).
+  var betikEtiketi = document.currentScript;
+  var HB_PAKET = (betikEtiketi && betikEtiketi.getAttribute('data-hata-bildir-paketi')) ||
+    (typeof window.TARUS_HATA_BILDIR_PAKETI === 'string' ? window.TARUS_HATA_BILDIR_PAKETI : '');
+  var HB_SURUM = (betikEtiketi && betikEtiketi.getAttribute('data-hata-bildir-surum')) || '';
+
+  // Pusula kökü: Pusula'nın kendisi `window.__tarusPusulaApi` verir; yoksa alan
+  // adına göre canlı ya da test Pusula'sı (utils/ekosistem.ts ile aynı kural).
+  function pusulaKoku() {
+    var kok = typeof window.__tarusPusulaApi === 'string' ? window.__tarusPusulaApi : '';
+    if (kok) return kok.replace(/\/+$/, '');
+    return 'https://' + (/^test[-.]/.test(window.location.hostname) ? 'test-' : '') + 'pusula.tarus.tr';
+  }
 
   var isMenuOpen = false;
   var activeMenuEl = null;
@@ -254,24 +281,20 @@
     if (bugBtn) {
       bugBtn.addEventListener('click', function () {
         closeMenu();
-        if (typeof window.__tarusOpenHataBildir === 'function') {
-          window.__tarusOpenHataBildir();
-        } else {
-          openFeedbackModal();
-        }
+        hataBildirAc('bug');
       });
     }
   }
 
   // ── Hata Bildir Modalı ──
-  function openFeedbackModal() {
+  function openFeedbackModal(ilkTur) {
     if (activeModalEl && activeModalEl.parentNode) {
       activeModalEl.parentNode.removeChild(activeModalEl);
     }
     injectStyles();
 
     var moduleName = document.title || window.location.pathname;
-    var selectedType = 'bug';
+    var selectedType = ilkTur === 'idea' ? 'idea' : 'bug';
 
     var overlay = document.createElement('div');
     overlay.className = 'tarus-fb-overlay';
@@ -305,11 +328,11 @@
       '      <button type="button" class="tarus-fb-tab" data-type="idea">Fikir</button>',
       '    </div>',
       '    <div class="tarus-fb-field">',
-      '      <label class="tarus-fb-label">Başlık</label>',
+      '      <label class="tarus-fb-label" for="tarus-fb-title">Başlık</label>',
       '      <input type="text" class="tarus-fb-input" id="tarus-fb-title" placeholder="Kısaca ne oldu?" autofocus />',
       '    </div>',
       '    <div class="tarus-fb-field">',
-      '      <label class="tarus-fb-label">Açıklama</label>',
+      '      <label class="tarus-fb-label" for="tarus-fb-desc">Açıklama</label>',
       '      <textarea class="tarus-fb-textarea" id="tarus-fb-desc" rows="4" placeholder="Hangi adımlardan sonra oldu? Ne bekliyordunuz?"></textarea>',
       '    </div>',
       '    <div id="tarus-fb-msg" class="tarus-fb-msg" style="display:none;"></div>',
@@ -346,13 +369,26 @@
     var descInput = overlay.querySelector('#tarus-fb-desc');
     var msgDiv = overlay.querySelector('#tarus-fb-msg');
 
+    // Sonuç sayfada toast varsa toast ile (Pusula gibi), yoksa pencere içi mesaj.
+    // Toast gösterildiyse true döner.
+    function bildir(tur, metin) {
+      var shell = window.TarusShell;
+      if (shell && typeof shell.toast === 'function') {
+        shell.toast(metin, tur);
+        msgDiv.style.display = 'none';
+        return true;
+      }
+      msgDiv.className = 'tarus-fb-msg ' + (tur === 'success' ? 'is-success' : 'is-error');
+      msgDiv.textContent = metin;
+      msgDiv.style.display = 'block';
+      return false;
+    }
+
     submitBtn.addEventListener('click', function () {
       var title = (titleInput.value || '').trim();
       var desc = (descInput.value || '').trim();
       if (!title || !desc) {
-        msgDiv.className = 'tarus-fb-msg is-error';
-        msgDiv.textContent = 'Başlık ve açıklama alanları zorunludur.';
-        msgDiv.style.display = 'block';
+        bildir('error', 'Başlık ve açıklama alanları zorunludur.');
         return;
       }
 
@@ -391,14 +427,12 @@
       } catch (err) { /* yoksay */ }
 
       var showError = function (text) {
-        msgDiv.className = 'tarus-fb-msg is-error';
-        msgDiv.textContent = text;
-        msgDiv.style.display = 'block';
+        bildir('error', text);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Gönder';
       };
 
-      fetch('https://pusula.tarus.tr/auth/feedbacks/', {
+      fetch(pusulaKoku() + '/auth/feedbacks/', {
         method: 'POST',
         headers: headers,
         credentials: 'include',
@@ -406,25 +440,77 @@
       })
         .then(function (res) {
           if (res.status === 401 || res.status === 403) {
-            showError('Bildirim gönderilemedi: Pusula oturumunuz yok. pusula.tarus.tr\'ye giriş yapıp tekrar deneyin.');
+            showError('Bildirim gönderilemedi: Pusula oturumunuz yok. Pusula\'ya giriş yapıp tekrar deneyin.');
             return;
           }
           if (!res.ok) {
             showError('Bildirim gönderilemedi (' + res.status + '). Lütfen tekrar deneyin.');
             return;
           }
-          msgDiv.className = 'tarus-fb-msg is-success';
-          msgDiv.textContent = 'Bildiriminiz iletildi. Teşekkürler.';
-          msgDiv.style.display = 'block';
-          setTimeout(closeModal, 1200);
+          try { window.dispatchEvent(new CustomEvent('tarus:hata-bildirildi')); } catch (err) { /* eski tarayıcı */ }
+          if (bildir('success', 'Bildiriminiz iletildi. Teşekkürler.')) closeModal();
+          else setTimeout(closeModal, 1200);
         })
         .catch(function () {
           showError('Bildirim gönderilemedi: bağlantı kurulamadı. Lütfen tekrar deneyin.');
         });
     });
 
+    if (selectedType === 'idea') {
+      tabs.forEach(function (t) { t.classList.toggle('is-active', t.getAttribute('data-type') === 'idea'); });
+    }
+
     document.body.appendChild(overlay);
     activeModalEl = overlay;
+  }
+
+  // Sayfalar (ör. Hakkında'daki «Yeni bildirim») aynı pencereyi açabilsin.
+  window.__tarusHataBildirAc = function (tur) {
+    closeMenu();
+    hataBildirAc(tur);
+  };
+
+  // Pusula'daki Hata bildir akışı (ekran görüntüsü + işaretleme) React'sız
+  // sayfada ayrı paketten gelir (~130 KB sıkıştırılmış); her sayfada yüklenmesin
+  // diye ilk tıklamada yüklenir. Paket window.__tarusOpenHataBildir kancasını kurar.
+  var hbYukleniyor = null;
+  function hataBildirAc(tur) {
+    if (typeof window.__tarusOpenHataBildir === 'function') {
+      window.__tarusOpenHataBildir(tur);
+      return;
+    }
+    if (!HB_PAKET) {
+      openFeedbackModal(tur);
+      return;
+    }
+    if (!hbYukleniyor) {
+      var ek = HB_SURUM ? '?v=' + encodeURIComponent(HB_SURUM) : '';
+      hbYukleniyor = new Promise(function (coz, reddet) {
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = HB_PAKET + '.css' + ek;
+        document.head.appendChild(css);
+        var js = document.createElement('script');
+        js.src = HB_PAKET + '.js' + ek;
+        js.onload = function () {
+          // React kancayı ilk çizimden sonra kurar; kısa süre bekle.
+          var deneme = 0;
+          (function bekle() {
+            if (typeof window.__tarusOpenHataBildir === 'function') return coz();
+            if (++deneme > 40) return reddet(new Error('kanca kurulmadı'));
+            window.setTimeout(bekle, 50);
+          })();
+        };
+        js.onerror = function () { reddet(new Error('paket yüklenemedi')); };
+        document.head.appendChild(js);
+      });
+    }
+    hbYukleniyor.then(function () {
+      window.__tarusOpenHataBildir(tur);
+    }, function () {
+      hbYukleniyor = null;
+      openFeedbackModal(tur);
+    });
   }
 
   // ── YouTube-Stili 1-2 Sağ Tık Döngüsü ──

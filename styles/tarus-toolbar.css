@@ -241,7 +241,7 @@
   .tarus-toolbar-button-danger {
     border-color: color-mix(in srgb, var(--danger) 35%, transparent);
     background: color-mix(in srgb, var(--danger) 12%, transparent);
-    color: var(--danger);
+    color: var(--danger-text, var(--danger));
   }
 
   .tarus-toolbar-button-danger:hover {
@@ -331,7 +331,7 @@
   .tarus-toolbar-segment-button.is-danger {
     border-color: color-mix(in srgb, var(--danger) 35%, transparent);
     background: color-mix(in srgb, var(--danger) 12%, transparent);
-    color: var(--danger);
+    color: var(--danger-text, var(--danger));
   }
 
   .tarus-toolbar-button:focus-visible,
