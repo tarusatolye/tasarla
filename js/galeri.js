@@ -438,8 +438,13 @@
     const a = acikTasarim();
     if (a) P().baslik(a.baslik || (a.kaynakBaslik ? `«${a.kaynakBaslik}» şablonundan` : ''));
     let hazir = false;
-    // Yalnız 200 yetmez: API'siz bir nginx /api/ yolunu index.html ile de yanıtlayabilir
-    try { hazir = (await (await fetch(API + '/saglik/', {credentials: 'omit'})).json()).ok === true; } catch(e) {}
+    // Yalnız 200 yetmez: API'siz bir nginx /api/ yolunu index.html ile de yanıtlayabilir.
+    // API'siz tek ortam yerel statik önizleme (launch.json `tasarla`, localhost:8095):
+    // orada istek atılmaz, tarayıcı konsola 404 yazmasın (denetim TSR-08, kullanıcı kararı).
+    const apisizOnizleme = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === '8095';
+    if (!apisizOnizleme) {
+      try { hazir = (await (await fetch(API + '/saglik/', {credentials: 'omit'})).json()).ok === true; } catch(e) {}
+    }
     if (!hazir) return;                          // API yayında değil: paylaşım özellikleri gizli kalır
     $('#galeriBtn').hidden = $('#paylasBtn').hidden = false;
     $('#galeriBtn').onclick = galeriAc;
